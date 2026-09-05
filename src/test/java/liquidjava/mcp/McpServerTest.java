@@ -117,8 +117,8 @@ class McpServerTest {
             var tool = client.listTools().tools().stream()
                     .filter(t -> t.name().equals(name)).findFirst().orElseThrow();
             var arguments = name.equals("get_locals")
-                    ? Map.<String, Object>of("file", file, "line", 12, "column", 9)
-                    : Map.<String, Object>of("file", file);
+                    ? Map.<String, Object>of("path", file, "file", file, "line", 12, "column", 9)
+                    : Map.<String, Object>of("path", file, "file", file);
             var result = client.callTool(new CallToolRequest(name, arguments));
             assertFalse(result.isError(), result.toString());
             var content = (Map<?, ?>) result.structuredContent();

@@ -2,34 +2,23 @@
   "inputSchema": {
     "type": "object",
     "properties": {
+      "path": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S",
+        "description": "Java source file or directory to verify."
+      },
       "file": {
         "type": "string",
         "minLength": 1,
-        "pattern": "\\S"
-      },
-      "line": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 2147483647
-      },
-      "column": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 2147483647
+        "pattern": "\\S",
+        "description": "Java source file whose ghost and state declarations should be returned."
       }
     },
     "required": [
-      "file"
+      "path"
     ],
-    "additionalProperties": false,
-    "dependentRequired": {
-      "line": [
-        "column"
-      ],
-      "column": [
-        "line"
-      ]
-    }
+    "additionalProperties": false
   },
   "outputSchema": {
     "type": "object",
@@ -121,7 +110,8 @@
             "name",
             "qualifiedName",
             "returnType",
-            "parameterTypes"
+            "parameterTypes",
+            "file"
           ],
           "additionalProperties": false
         }
@@ -157,7 +147,8 @@
             "name",
             "qualifiedName",
             "returnType",
-            "parameterTypes"
+            "parameterTypes",
+            "file"
           ],
           "additionalProperties": false
         }

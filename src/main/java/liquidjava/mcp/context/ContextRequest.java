@@ -2,39 +2,59 @@ package liquidjava.mcp.context;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
-public record ContextRequest(String file, Integer line, Integer column) {
+public record ContextRequest(String path, String file, Integer line, Integer column) {
     public ContextRequest {
-        if (file == null || file.isBlank())
-            throw new IllegalArgumentException("file must be a nonblank string");
+        if (path == null || path.isBlank())
+            throw new IllegalArgumentException("path must be a nonblank string");
+        try {
+            Path.of(path);
+        } catch (InvalidPathException e) {
+            throw new IllegalArgumentException("invalid path: " + e.getReason(), e);
+        }
 
-        Path path = Path.of(file).toAbsolutePath().normalize();
-        if (!Files.isRegularFile(path) || !file.endsWith(".java"))
-            throw new IllegalArgumentException("file must be an existing Java source file");
-
-        file = path.toString();
+        if (file != null) {
+            if (file.isBlank())
+                throw new IllegalArgumentException("file must be a nonblank string");
+            Path sourceFile = Path.of(file).toAbsolutePath().normalize();
+            if (!Files.isRegularFile(sourceFile) || !file.endsWith(".java"))
+                throw new IllegalArgumentException("file must be an existing Java source file");
+            file = sourceFile.toString();
+        }
         if (line != null || column != null) {
-            if (line == null || column == null || line < 1 || column < 1)
+            if (file == null || line == null || column == null || line < 1 || column < 1)
                 throw new IllegalArgumentException("line and column must both be positive integers");
         }
     }
 
-    public static ContextRequest fromArguments(Map<String, Object> arguments) {
-        if (arguments == null || !(arguments.get("file") instanceof String file))
-            throw new IllegalArgumentException("expected file and optionally both line and column");
+    public static ContextRequest fromGlobalArguments(Map<String, Object> arguments) {
+        if (arguments == null || !(arguments.get("path") instanceof String path)
+                || !(arguments.keySet().equals(Set.of("path"))
+                    || arguments.keySet().equals(Set.of("path", "file"))))
+            throw new IllegalArgumentException("expected path and optional file");
 
-        if (arguments.keySet().equals(Set.of("file")))
-            return new ContextRequest(file, null, null);
+        Object file = arguments.get("file");
+        if (arguments.containsKey("file") && !(file instanceof String))
+            throw new IllegalArgumentException("file must be a nonblank string");
 
-        if (!arguments.keySet().equals(Set.of("file", "line", "column")))
-            throw new IllegalArgumentException("expected file and optionally both line and column");
+        return new ContextRequest(path, (String) file, null, null);
+    }
+
+    public static ContextRequest fromPositionArguments(Map<String, Object> arguments) {
+        if (arguments == null || !(arguments.get("path") instanceof String path)
+                || !(arguments.get("file") instanceof String file))
+            throw new IllegalArgumentException("expected path, file, line, and column");
+
+        if (!arguments.keySet().equals(Set.of("path", "file", "line", "column")))
+            throw new IllegalArgumentException("expected path, file, line, and column");
 
         int line = coordinate(arguments.get("line"));
         int column = coordinate(arguments.get("column"));
-        return new ContextRequest(file, line, column);
+        return new ContextRequest(path, file, line, column);
     }
 
     private static int coordinate(Object value) {

@@ -2,10 +2,17 @@
   "inputSchema": {
     "type": "object",
     "properties": {
+      "path": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S",
+        "description": "Java source file or directory to verify."
+      },
       "file": {
         "type": "string",
         "minLength": 1,
-        "pattern": "\\S"
+        "pattern": "\\S",
+        "description": "Java source file in which to resolve the cursor position."
       },
       "line": {
         "type": "integer",
@@ -19,6 +26,7 @@
       }
     },
     "required": [
+      "path",
       "file",
       "line",
       "column"

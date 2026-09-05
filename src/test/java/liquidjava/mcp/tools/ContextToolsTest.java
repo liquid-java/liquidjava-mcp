@@ -3,8 +3,10 @@ package liquidjava.mcp.tools;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.mcp.context.ContextInspector;
@@ -24,6 +26,10 @@ class ContextToolsTest {
     private final GetGlobalsTool globals = new GetGlobalsTool(inspector, McpJsonDefaults.getMapper());
     private static final String FILE = "src/test/resources/fixtures/Context.java";
 
+    private static Map<String, Object> globalArguments(String file) {
+        return Map.of("path", file, "file", file);
+    }
+
     @Test
     void filtersScopesAndKeepsRefinementsAndInternalNames() {
         var inside = localVariables(10, 28);
@@ -37,25 +43,29 @@ class ContextToolsTest {
     }
 
     @Test
-    void globalsAreIndependentOfPositionAndDoNotLeakAcrossCalls() {
-        var first = globals.call(Map.of("file", FILE));
-        var positioned = globals.call(Map.of("file", FILE, "line", 12, "column", 9));
+    void globalsAreFilteredByFileAndDoNotLeakAcrossCalls() {
+        var first = globals.call(globalArguments(FILE));
         assertFalse(first.isError());
-        assertEquals(first.structuredContent(), positioned.structuredContent());
-        var empty = (Map<?, ?>) globals.call(Map.of("file", "src/test/resources/fixtures/Valid.java")).structuredContent();
+        var content = (Map<?, ?>) first.structuredContent();
+        String file = Path.of(FILE).toAbsolutePath().normalize().toString();
+        for (String key : List.of("ghosts", "states")) {
+            assertTrue(((List<?>) content.get(key)).stream()
+                    .allMatch(entry -> file.equals(((Map<?, ?>) entry).get("file"))));
+        }
+        var empty = (Map<?, ?>) globals.call(globalArguments("src/test/resources/fixtures/Valid.java")).structuredContent();
         for (String key : List.of("aliases", "ghosts", "states")) assertEquals(List.of(), empty.get(key));
         assertFalse(CommandLineLauncher.cmdArgs.lspMode);
         assertTrue(verifier.verify(new VerifyRequest(List.of("src/test/resources/fixtures/Valid.java"), false)).success());
-        assertEquals(first.structuredContent(), globals.call(Map.of("file", FILE)).structuredContent());
+        assertEquals(first.structuredContent(), globals.call(globalArguments(FILE)).structuredContent());
     }
 
     @Test
     void verificationErrorsReturnStatusWithoutDiagnostics() {
         for (String fixture : List.of("Invalid.java", "Warning.java")) {
-            var arguments = Map.<String, Object>of("file", "src/test/resources/fixtures/" + fixture, "line", 6, "column", 5);
+            String file = "src/test/resources/fixtures/" + fixture;
             for (var response : List.of(
-                    Map.entry(locals.call(arguments), locals.specification().tool().outputSchema()),
-                    Map.entry(globals.call(arguments), globals.specification().tool().outputSchema()))) {
+                    Map.entry(locals.call(Map.of("path", file, "file", file, "line", 6, "column", 5)), locals.specification().tool().outputSchema()),
+                    Map.entry(globals.call(globalArguments(file)), globals.specification().tool().outputSchema()))) {
                 var result = response.getKey();
                 assertFalse(result.isError());
                 var content = (Map<?, ?>) result.structuredContent();
@@ -84,35 +94,82 @@ class ContextToolsTest {
     }
 
     static Stream<Map<String, Object>> invalidArguments() {
-        return Stream.of(null, Map.of(), Map.of("file", FILE, "line", 1),
-                Map.of("file", FILE, "line", 1, "column", 1, "extra", true),
-                Map.of("file", FILE, "line", 0, "column", 1),
-                Map.of("file", FILE, "line", 1.5, "column", 1),
-                Map.of("file", FILE, "line", 2147483648L, "column", 1),
-                Map.of("file", FILE, "line", "1", "column", 1),
-                Map.of("file", "missing.java", "line", 1, "column", 1),
-                Map.of("file", "src/test/resources/fixtures", "line", 1, "column", 1),
-                Map.of("file", "a\u0000b", "line", 1, "column", 1));
+        return Stream.of(null, Map.of(), Map.of("path", FILE, "file", FILE, "line", 1),
+                Map.of("path", FILE, "file", FILE, "line", 1, "column", 1, "extra", true),
+                Map.of("path", FILE, "file", FILE, "line", 0, "column", 1),
+                Map.of("path", FILE, "file", FILE, "line", 1.5, "column", 1),
+                Map.of("path", FILE, "file", FILE, "line", 2147483648L, "column", 1),
+                Map.of("path", FILE, "file", FILE, "line", "1", "column", 1),
+                Map.of("path", FILE, "file", "missing.java", "line", 1, "column", 1),
+                Map.of("path", FILE, "file", "src/test/resources/fixtures", "line", 1, "column", 1),
+                Map.of("path", FILE, "file", "a\u0000b", "line", 1, "column", 1));
     }
 
     @Test
     void globalsIncludeDefinitionsWithoutMethods() {
-        var result = globals.call(Map.of("file", "src/test/resources/fixtures/Definitions.java"));
+        var result = globals.call(globalArguments("src/test/resources/fixtures/Definitions.java"));
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
         assertEquals(1, ((List<?>) content.get("aliases")).size());
-        assertEquals(2, ((List<?>) content.get("ghosts")).size());
+        assertEquals(List.of("count"), ((List<Map<?, ?>>) content.get("ghosts")).stream()
+                .map(ghost -> ghost.get("name")).toList());
         assertEquals(2, ((List<?>) content.get("states")).size());
     }
 
     @Test
+    void globalsUsePathForVerificationAndFileForFiltering() {
+        String path = "src/test/resources/fixtures/globals";
+        String file = path + "/First.java";
+        var result = globals.call(Map.of("path", path, "file", file));
+        assertFalse(result.isError());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(Set.of("FirstAlias", "SecondAlias"), ((List<Map<?, ?>>) content.get("aliases")).stream()
+                .map(alias -> (String) alias.get("name")).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(List.of("firstGhost"), ((List<Map<?, ?>>) content.get("ghosts")).stream()
+                .map(ghost -> ghost.get("name")).toList());
+        assertEquals(Set.of("firstOpen", "firstClosed"), ((List<Map<?, ?>>) content.get("states")).stream()
+                .map(state -> (String) state.get("name")).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(Set.of("path"), Set.copyOf((List<?>) globals.specification().tool().inputSchema()
+                .get("required")));
+        assertEquals(Set.of("path", "file"), ((Map<?, ?>) globals.specification().tool().inputSchema()
+                .get("properties")).keySet());
+    }
+
+    @Test
+    void globalsWithoutFileReturnAllGhostsAndStates() {
+        String path = "src/test/resources/fixtures/globals";
+        var result = globals.call(Map.of("path", path));
+        assertFalse(result.isError());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(Set.of("FirstAlias", "SecondAlias"), ((List<Map<?, ?>>) content.get("aliases")).stream()
+                .map(alias -> (String) alias.get("name")).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(Set.of("firstGhost", "secondGhost"), ((List<Map<?, ?>>) content.get("ghosts")).stream()
+                .map(ghost -> (String) ghost.get("name")).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(Set.of("firstOpen", "firstClosed", "secondOpen", "secondClosed"),
+                ((List<Map<?, ?>>) content.get("states")).stream()
+                        .map(state -> (String) state.get("name")).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    @Test
+    void localsUsePathForVerificationAndFileForFiltering() {
+        String path = "src/test/resources/fixtures/globals";
+        String file = path + "/First.java";
+        var result = locals.call(Map.of("path", path, "file", file, "line", 10, "column", 26));
+        assertFalse(result.isError());
+        assertTrue(((List<Map<?, ?>>) ((Map<?, ?>) result.structuredContent()).get("variables")).stream()
+                .anyMatch(variable -> variable.get("name").equals("local")));
+        assertEquals(Set.of("path", "file", "line", "column"),
+                Set.copyOf((List<?>) locals.specification().tool().inputSchema().get("required")));
+    }
+
+    @Test
     void localsRequirePosition() {
-        assertTrue(locals.call(Map.of("file", FILE)).isError());
+        assertTrue(locals.call(Map.of("path", FILE, "file", FILE)).isError());
     }
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> localVariables(int line, int column) {
-        var result = locals.call(Map.of("file", FILE, "line", line, "column", column));
+        var result = locals.call(Map.of("path", FILE, "file", FILE, "line", line, "column", column));
         assertFalse(result.isError(), result.toString());
         return (List<Map<String, Object>>) ((Map<?, ?>) result.structuredContent()).get("variables");
     }

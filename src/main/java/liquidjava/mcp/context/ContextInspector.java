@@ -9,17 +9,17 @@ import liquidjava.mcp.runtime.LiquidJavaRunner;
 public final class ContextInspector {
     public ContextResult getLocals(ContextRequest request) {
         if (request.line() == null)
-            return ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, "expected file, line, and column");
-        return inspect(request, () -> ContextMapper.locals(request));
+            return ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, "expected path, file, line, and column");
+        return inspect(request.path(), () -> ContextMapper.locals(request));
     }
 
     public ContextResult getGlobals(ContextRequest request) {
-        return inspect(request, ContextMapper::globals);
+        return inspect(request.path(), () -> ContextMapper.globals(request));
     }
 
-    private ContextResult inspect(ContextRequest request, Supplier<Map<String, Object>> snapshot) {
+    private ContextResult inspect(String path, Supplier<Map<String, Object>> snapshot) {
         return LiquidJavaRunner.run(
-            List.of(request.file()),
+            List.of(path),
             true, 
             false,
             output -> ContextResult.completed(!Diagnostics.getInstance().foundError(), snapshot.get()),

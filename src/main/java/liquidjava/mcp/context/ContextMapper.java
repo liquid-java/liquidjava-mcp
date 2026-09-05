@@ -5,9 +5,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import liquidjava.mcp.utils.Utils;
 import liquidjava.processor.context.AliasWrapper;
@@ -41,12 +38,12 @@ final class ContextMapper {
         return Map.of("variables", variables);
     }
 
-    static Map<String, Object> globals() {
+    static Map<String, Object> globals(ContextRequest request) {
         Context context = Context.getInstance();
         return Map.of(
             "aliases", aliases(context),
-            "ghosts", ghosts(context),
-            "states", states(context)
+            "ghosts", ghosts(context, request.file()),
+            "states", states(context, request.file())
         );
     }
 
@@ -58,26 +55,20 @@ final class ContextMapper {
             .toList();
     }
 
-    private static List<Map<String, Object>> ghosts(Context context) {
-        Set<String> stateFunctionNames = context.getGhostStates().stream()
-            .filter(state -> state.getParent() != null)
-            .map(state -> state.getParent().getQualifiedName())
-            .collect(Collectors.toSet());
-        Stream<GhostState> standaloneGhosts = context.getGhostStates().stream()
-            .filter(state -> state.getParent() == null);
-        Stream<GhostFunction> ghostFunctions = context.getGhosts().stream()
-            .filter(ghost -> !stateFunctionNames.contains(ghost.getQualifiedName()));
-
-        return Stream.concat(standaloneGhosts, ghostFunctions)
+    private static List<Map<String, Object>> ghosts(Context context, String file) {
+        return context.getGhostStates().stream()
+            .filter(state -> state.getParent() == null)
+            .filter(state -> file == null || state.getFile() != null && sameFile(state.getFile(), file))
             .sorted(Comparator.comparing(GhostFunction::getQualifiedName))
             .map(ContextMapper::ghost)
             .distinct()
             .toList();
     }
 
-    private static List<Map<String, Object>> states(Context context) {
+    private static List<Map<String, Object>> states(Context context, String file) {
         return context.getGhostStates().stream()
             .filter(state -> state.getParent() != null)
+            .filter(state -> file == null || state.getFile() != null && sameFile(state.getFile(), file))
             .sorted(Comparator.comparing(GhostState::getQualifiedName))
             .map(ContextMapper::ghost)
             .toList();

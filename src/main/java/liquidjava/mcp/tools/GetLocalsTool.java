@@ -21,7 +21,7 @@ public final class GetLocalsTool {
     private final McpJsonMapper jsonMapper;
     private final String name = "get_locals";
     private final String description = """
-        Runs LiquidJava on a Java file and returns the variables and their refinements filtered by source scope and position.
+        Runs LiquidJava on a path and returns variables and their refinements filtered by source file, scope, and position.
         Locations use one-based lines and columns with inclusive ends.
     """;
 
@@ -44,7 +44,7 @@ public final class GetLocalsTool {
     public CallToolResult call(Map<String, Object> arguments) {
         ContextRequest request;
         try {
-            request = ContextRequest.fromArguments(arguments);
+            request = ContextRequest.fromPositionArguments(arguments);
         } catch (IllegalArgumentException e) {
             return toMcpResult(ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, e.getMessage()));
         }

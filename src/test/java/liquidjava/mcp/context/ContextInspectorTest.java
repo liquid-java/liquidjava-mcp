@@ -27,7 +27,10 @@ class ContextInspectorTest {
     @Test
     void concurrentContextAndVerificationCallsKeepSeparateSnapshots() throws Exception {
         var jobs = new ArrayList<Callable<Void>>();
-        var request = new ContextRequest("src/test/resources/fixtures/Context.java", 12, 9);
+        var request = new ContextRequest("src/test/resources/fixtures/Context.java",
+                "src/test/resources/fixtures/Context.java", 12, 9);
+        var globalsRequest = new ContextRequest("src/test/resources/fixtures/Context.java",
+                "src/test/resources/fixtures/Context.java", null, null);
         for (int i = 0; i < 4; i++) {
             jobs.add(() -> {
                 var result = new ContextInspector().getLocals(request);
@@ -38,7 +41,7 @@ class ContextInspectorTest {
                 return null;
             });
             jobs.add(() -> {
-                var result = new ContextInspector().getGlobals(request);
+                var result = new ContextInspector().getGlobals(globalsRequest);
                 assertTrue(result.success(), result.toString());
                 assertEquals(2, ((List<?>) result.context().get("states")).size());
                 return null;
@@ -63,7 +66,8 @@ class ContextInspectorTest {
         Path broken = temporary.resolve("Duplicate.java");
         Files.writeString(broken, "class Duplicate {} class Duplicate {}");
         var inspector = new ContextInspector();
-        var valid = new ContextRequest("src/test/resources/fixtures/Context.java", null, null);
+        var valid = new ContextRequest("src/test/resources/fixtures/Context.java",
+                "src/test/resources/fixtures/Context.java", null, null);
         var before = inspector.getGlobals(valid);
         assertTrue(before.success());
         String snapshot = before.toString();
@@ -71,7 +75,7 @@ class ContextInspectorTest {
         PrintStream originalErr = System.err;
         try (var capture = new PrintStream(new ByteArrayOutputStream())) {
             System.setErr(capture);
-            var result = inspector.getGlobals(new ContextRequest(broken.toString(), null, null));
+            var result = inspector.getGlobals(new ContextRequest(broken.toString(), broken.toString(), null, null));
             assertFalse(result.success());
             assertEquals(ContextResult.ErrorCode.VERIFIER_ERROR, result.error().code());
             assertTrue(result.context().isEmpty());

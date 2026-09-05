@@ -24,26 +24,15 @@ Runs verification and exposes diagnostics in a machine-readable format, avoiding
 
 Exposes the verification context available at a specific point in the program.
 
-**Input:** A `file` path, `line`, and `column`. Lines and columns are one-based; the file must be an existing Java source file.
+**Input:** A `path` to the Java source file or directory to verify, plus a `file`, `line`, and `column` identifying the source position to inspect. Lines and columns are one-based.
 **Output:** `success` and `variables`. Each variable includes its source name, verifier `internalName`, Java type, refinement predicate, and source location (inclusive ends). Entries include declarations and refinement instances recorded before the position in enclosing scopes. Internal names preserve relationships between predicates. Positions outside recorded scopes return an empty array. This exposes source-filtered verifier history; synthesized branch-merge instances can carry the original declaration location, so it does not reconstruct the exact solver state at the cursor.
-
-Each call verifies the file afresh. Verification errors set `success` to false while preserving any available context. Diagnostics are available separately through `get_diagnostics`. Invalid inputs and verifier execution failures also return an `error` and set the MCP error flag.
 
 ### `get_globals`
 
-Allows agents to inspect LiquidJava-specific definitions available to the program.
+Allows agents to inspect global definitions available in the program.
 
-**Input:** A `file` path, optionally with both `line` and `column` using the same one-based convention as `get_locals`.
+**Input:** A `path` to the Java source file or directory to verify, optionally with a `file` identifying which source file's ghosts and states to return.
 **Output:** `success`, `aliases`, `ghosts`, and `states`. Aliases include parameter names, parameter types, and predicates; ghosts and states include qualified names, return types, parameter types, and their defining refinements when available.
-
-Definitions come from the file's fresh verification context. The optional position does not narrow global definitions. Error handling matches `get_locals`.
-
-### `get_refinement`
-
-Provides a targeted way to inspect what LiquidJava knows about a particular program element without retrieving the entire verification context.
-
-**Input:** A file path and source position or source range.
-**Output:** The declared and/or inferred refinement of the selected variable or expression.
 
 ### `get_vc`
 

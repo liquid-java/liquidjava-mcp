@@ -21,7 +21,7 @@ public final class GetGlobalsTool {
     private final McpJsonMapper jsonMapper;
     private final String name = "get_globals";
     private final String description = """
-        Runs LiquidJava on a Java file and returns global aliases, ghosts, and states.
+        Runs LiquidJava on a path and returns available aliases, ghosts, and states, optionally filtering ghosts and states by file.
     """;
 
     public GetGlobalsTool(ContextInspector inspector, McpJsonMapper jsonMapper) {
@@ -43,7 +43,7 @@ public final class GetGlobalsTool {
     public CallToolResult call(Map<String, Object> arguments) {
         ContextRequest request;
         try {
-            request = ContextRequest.fromArguments(arguments);
+            request = ContextRequest.fromGlobalArguments(arguments);
         } catch (IllegalArgumentException e) {
             return toMcpResult(ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, e.getMessage()));
         }
