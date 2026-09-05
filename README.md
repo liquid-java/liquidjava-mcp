@@ -1,62 +1,249 @@
 # LiquidJava MCP
 
-A local Java MCP server that exposes LiquidJava verification capabilities to LLM agents.
+A Java MCP server that exposes LiquidJava verification tools to LLM agents over stdio.
 
-It allows agents to verify Java code, inspect diagnostics and refinement contexts, and query LiquidJava's solver through structured MCP tools.
+It allows agents to run the LiquidJava verification, retrieve structured diagnostics, inspect the verification context, and query LiquidJava's solver with custom assumptions and conclusions.
+
+## Installation
+
+Build the project with `mvn package` and then point your MCP client at the resulting jar:
+
+```json
+{
+  "servers": {
+    "liquidjava-mcp": {
+      "type": "stdio",
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/liquidjava-mcp/target/liquidjava-mcp.jar"
+      ]
+    }
+  }
+}
+```
 
 ## Tools
 
+### Overview
+
+| Tool | Purpose | Input | Output |
+|---|---|---|---|
+| `verify` | Run the verification, get human-readable output (same as CLI) | file/folder path(s), optional `debug` | standard LiquidJava output |
+| `get_diagnostics` | Run verification, get structured/machine-readable diagnostics | file/folder path(s) | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
+| `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
+| `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, optional `file` | `aliases`, `ghosts`, `states` |
+| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`/`invalid`/`unknown`), `counterexample` or `reason` |
+
 ### `verify`
 
-Runs LiquidJava verification over the provided paths and returns the same representation normally shown to developers.
+Runs the LiquidJava verification and returns the same representation normally shown to developers.
 Allows agents to inspect verification conditions, their simplifications, and solver results using the `debug` flag.
 
 **Input:** One or more file or folder paths, with optional `debug` flag.
+
 **Output:** Verification status and the standard LiquidJava verification output.
+
+```json
+{
+  "paths": [".../Example.java"],
+  "debug": false
+}
+```
+
+```json
+{
+  "success": false,
+  "output": "Running LiquidJava on: .../Example.java\n\nRefinement Error: value >= 0 && #ret⁰ == value is not a subtype of #ret⁰ > 0\n..."
+}
+```
 
 ### `get_diagnostics`
 
-Runs verification and exposes diagnostics in a machine-readable format, avoiding the need for agents to parse terminal output.
+Runs the LiquidJava verification and exposes diagnostics in a machine-readable format, avoiding the need for agents to parse terminal output.
 
 **Input:** One or more file or folder paths.
-**Output:** Separate `errors` and `warnings` arrays of structured diagnostics, including type, severity, location, message, refinements, hints, and counterexamples when available.
+
+**Output:** Verification status and `errors` and `warnings` arrays of structured diagnostics, including type, severity, location, message, refinements, hints, and counterexamples when available.
+
+```json
+{
+  "paths": [".../Example.java"]
+}
+```
+
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "refinements": {
+        "found": "value >= 0 && #ret_0 == value",
+        "expected": "#ret_0 > 0"
+      },
+      "type": "RefinementError",
+      "severity": "error",
+      "counterexample": [
+        {"variable": "value", "value": "0"},
+        {"variable": "#ret_0", "value": "0"}
+      ],
+      "declarationLocation": {
+        "file": ".../Example.java",
+        "startColumn": 9,
+        "endLine": 13,
+        "endColumn": 5,
+        "startLine": 11
+      },
+      "location": {
+        "file": ".../Example.java",
+        "startColumn": 9,
+        "endLine": 12,
+        "endColumn": 21,
+        "startLine": 12
+      },
+      "message": "value >= 0 && #ret⁰ == value is not a subtype of #ret⁰ > 0"
+    }
+  ],
+  "warnings": []
+}
+```
 
 ### `get_locals`
 
 Exposes the verification context available at a specific point in the program.
 
 **Input:** A `path` to the Java source file or directory to verify, plus a `file`, `line`, and `column` identifying the source position to inspect. Lines and columns are one-based.
-**Output:** `success` and `variables`. Each variable includes its source name, verifier `internalName`, Java type, refinement predicate, and source location (inclusive ends). Entries include declarations and refinement instances recorded before the position in enclosing scopes. Internal names preserve relationships between predicates. Positions outside recorded scopes return an empty array. This exposes source-filtered verifier history; synthesized branch-merge instances can carry the original declaration location, so it does not reconstruct the exact solver state at the cursor.
+
+**Output:** `variables`. Each variable includes its source name, verifier `internalName`, Java type, refinement predicate, and source location (inclusive ends). Entries include declarations and refinement instances recorded before the position in enclosing scopes. Internal names preserve relationships between predicates. Positions outside recorded scopes return an empty array. This exposes source-filtered verifier history; synthesized branch-merge instances can carry the original declaration location, so it does not reconstruct the exact solver state at the cursor.
+
+```json
+{
+  "path": ".../Example.java",
+  "file": ".../Example.java",
+  "line": 12,
+  "column": 16
+}
+```
+
+```json
+{
+  "variables": [
+    {
+      "name": "value",
+      "internalName": "value",
+      "location": {
+        "file": ".../Example.java",
+        "startColumn": 41,
+        "endLine": 11,
+        "endColumn": 45,
+        "startLine": 11
+      },
+      "type": "int",
+      "refinement": "value >= 0"
+    },
+    {
+      "name": "ret",
+      "internalName": "#ret_0",
+      "location": {
+        "file": ".../Example.java",
+        "startColumn": 9,
+        "endLine": 12,
+        "endColumn": 21,
+        "startLine": 12
+      },
+      "type": "int",
+      "refinement": "#ret_0 == value"
+    },
+    {
+      "name": "this#Example",
+      "internalName": "this#Example",
+      "location": {
+        "file": ".../Example.java",
+        "startColumn": 9,
+        "endLine": 12,
+        "endColumn": 21,
+        "startLine": 12
+      },
+      "type": "com.example.Example",
+      "refinement": "true"
+    }
+  ]
+}
+```
 
 ### `get_globals`
 
-Allows agents to inspect global definitions available in the program.
+Provides global definitions available in the program.
 
 **Input:** A `path` to the Java source file or directory to verify, optionally with a `file` identifying which source file's ghosts and states to return.
-**Output:** `success`, `aliases`, `ghosts`, and `states`. Aliases include parameter names, parameter types, and predicates; ghosts and states include qualified names, return types, parameter types, and their defining refinements when available.
+
+**Output:** `aliases`, `ghosts`, and `states`. Aliases include parameter names, parameter types, and predicates; ghosts and states include qualified names, return types, parameter types, and their defining refinements when available.
+
+```json
+{
+  "path": ".../Example.java"
+}
+```
+
+```json
+{
+  "aliases": [
+    {
+      "predicate": "v >= 0",
+      "parameterTypes": ["int"],
+      "parameters": ["v"],
+      "name": "Positive"
+    }
+  ],
+  "ghosts": [
+    {
+      "qualifiedName": "com.example.Example.size",
+      "file": ".../Example.java",
+      "name": "size",
+      "parameterTypes": ["com.example.Example"],
+      "returnType": "int"
+    }
+  ],
+  "states": [
+    {
+      "qualifiedName": "com.example.Example.closed",
+      "refinement": "state1(_) == 1",
+      "file": ".../Example.java",
+      "parameterTypes": ["com.example.Example"],
+      "returnType": "boolean",
+      "name": "closed"
+    },
+    {
+      "qualifiedName": "com.example.Example.open",
+      "refinement": "state1(_) == 0",
+      "file": ".../Example.java",
+      "parameterTypes": ["com.example.Example"],
+      "returnType": "boolean",
+      "name": "open"
+    }
+  ]
+}
+```
 
 ### `check_validity`
 
 Checks whether custom assumptions imply one conclusion using LiquidJava's solver, without verifying Java files.
-Ghost functions, aliases, source constants, and implicit receiver/return/old-state bindings are not supported.
+Does not support ghost functions, aliases, source constants, and implicit receiver/return/old-state bindings.
 
 **Input:** `variables` (map of names to types), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
+
+**Output:** `status` equal to `valid`, `invalid`, or `unknown`. Invalid results include a `counterexample` array (possibly empty); unknown results include the solver's `reason`.
 
 ```json
 {
   "variables": {"x": "int"},
-  "assumptions": ["x > 0"],
-  "conclusion": "x >= 0"
+  "assumptions": ["x >= 0"],
+  "conclusion": "x > 0"
 }
 ```
 
-**Output:** `success: true` with `status` equal to `valid`, `invalid`, or `unknown`. Invalid results include a `counterexample` array (possibly empty); unknown results include the solver's `reason`. Invalid claims are normal tool results. Input and execution failures return `success: false` with an `error` containing `code` (`INVALID_INPUT` or `VERIFIER_ERROR`) and `message`, and set MCP `isError: true`.
-
-With assumptions `["x >= 0"]` and conclusion `"x > 0"`, it returns:
-
 ```json
 {
-  "success": true,
   "status": "invalid",
   "counterexample": [{"variable": "x", "value": "0"}]
 }
