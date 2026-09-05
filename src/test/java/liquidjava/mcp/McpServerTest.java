@@ -41,7 +41,7 @@ class McpServerTest {
     @Test
     void advertisesVerifyAndReturnsStructuredOutput() throws Exception {
         var tools = client.listTools().tools();
-        assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals"), tools.stream().map(tool -> tool.name()).toList());
+        assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals", "check_validity"), tools.stream().map(tool -> tool.name()).toList());
 
         var result = client.callTool(verifyRequest("Valid.java"));
         assertFalse(result.isError());
@@ -141,6 +141,29 @@ class McpServerTest {
             assertTrue(invalid.isError());
             assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
         }
+    }
+
+    @Test
+    void checksValidityOverStdioAlongsideVerification() throws Exception {
+        var tool = client.listTools().tools().stream()
+                .filter(t -> t.name().equals("check_validity")).findFirst().orElseThrow();
+        var arguments = Map.<String, Object>of("variables", Map.of("x", "int"),
+                "assumptions", List.of("x >= 0"), "conclusion", "x > 0");
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.inputSchema(), arguments).valid());
+        client.callTool(verifyRequest("Valid.java"));
+        var result = client.callTool(new CallToolRequest("check_validity", arguments));
+        assertFalse(result.isError());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(true, content.get("success"));
+        assertEquals("invalid", content.get("status"));
+        assertEquals(List.of(Map.of("variable", "x", "value", "0")), content.get("counterexample"));
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
+        assertEquals(content, McpJsonDefaults.getMapper().readValue(
+                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
+        var invalid = client.callTool(new CallToolRequest("check_validity", Map.of()));
+        assertTrue(invalid.isError());
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
+        assertEquals(true, ((Map<?, ?>) client.callTool(verifyRequest("Valid.java")).structuredContent()).get("success"));
     }
 
     private static CallToolRequest verifyRequest(String fixture) {

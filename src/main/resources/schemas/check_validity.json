@@ -1,0 +1,237 @@
+{
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "variables": {
+        "type": "object",
+        "propertyNames": {
+          "pattern": "^(?![A-Z][a-zA-Z0-9]*$)#*[a-zA-Z_][a-zA-Z0-9_#]*$",
+          "not": {
+            "enum": [
+              "_",
+              "this",
+              "old",
+              "true",
+              "false",
+              "int",
+              "double",
+              "float",
+              "boolean"
+            ]
+          }
+        },
+        "additionalProperties": {
+          "enum": [
+            "boolean",
+            "short",
+            "char",
+            "int",
+            "long",
+            "float",
+            "double"
+          ]
+        }
+      },
+      "assumptions": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "conclusion": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      }
+    },
+    "required": [
+      "variables",
+      "assumptions",
+      "conclusion"
+    ],
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean"
+      },
+      "status": {
+        "enum": [
+          "valid",
+          "invalid",
+          "unknown"
+        ]
+      },
+      "counterexample": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "variable": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "variable",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "enum": [
+              "INVALID_INPUT",
+              "VERIFIER_ERROR"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "success"
+    ],
+    "additionalProperties": false,
+    "oneOf": [
+      {
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "status": {
+            "const": "valid"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "counterexample"
+              ]
+            },
+            {
+              "required": [
+                "reason"
+              ]
+            },
+            {
+              "required": [
+                "error"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "status": {
+            "const": "invalid"
+          }
+        },
+        "required": [
+          "status",
+          "counterexample"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "reason"
+              ]
+            },
+            {
+              "required": [
+                "error"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "properties": {
+          "success": {
+            "const": true
+          },
+          "status": {
+            "const": "unknown"
+          }
+        },
+        "required": [
+          "status",
+          "reason"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "counterexample"
+              ]
+            },
+            {
+              "required": [
+                "error"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "properties": {
+          "success": {
+            "const": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "status"
+              ]
+            },
+            {
+              "required": [
+                "counterexample"
+              ]
+            },
+            {
+              "required": [
+                "reason"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

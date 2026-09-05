@@ -2,13 +2,14 @@
 
 A local Java MCP server that exposes LiquidJava verification capabilities to LLM agents.
 
-It allows agents to verify Java code, inspect diagnostics and refinement contexts, retrieve verification conditions, and query LiquidJava's solver through structured MCP tools.
+It allows agents to verify Java code, inspect diagnostics and refinement contexts, and query LiquidJava's solver through structured MCP tools.
 
 ## Tools
 
 ### `verify`
 
 Runs LiquidJava verification over the provided paths and returns the same representation normally shown to developers.
+Allows agents to inspect verification conditions, their simplifications, and solver results using the `debug` flag.
 
 **Input:** One or more file or folder paths, with optional `debug` flag.
 **Output:** Verification status and the standard LiquidJava verification output.
@@ -34,16 +35,29 @@ Allows agents to inspect global definitions available in the program.
 **Input:** A `path` to the Java source file or directory to verify, optionally with a `file` identifying which source file's ghosts and states to return.
 **Output:** `success`, `aliases`, `ghosts`, and `states`. Aliases include parameter names, parameter types, and predicates; ghosts and states include qualified names, return types, parameter types, and their defining refinements when available.
 
-### `get_vc`
+### `check_validity`
 
-Exposes the logical obligation responsible for a verification result or failure, allowing agents to reason directly about why verification succeeded or failed.
+Checks whether custom assumptions imply one conclusion using LiquidJava's solver, without verifying Java files.
+Ghost functions, aliases, source constants, and implicit receiver/return/old-state bindings are not supported.
 
-**Input:** A file path and source position, source range, or diagnostic identifier.
-**Output:** The verification condition associated with that program location, including its assumptions, expected and inferred refinements, and optionally its simplified form.
+**Input:** `variables` (map of names to types), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
 
-### `check_vc`
+```json
+{
+  "variables": {"x": "int"},
+  "assumptions": ["x > 0"],
+  "conclusion": "x >= 0"
+}
+```
 
-Allows agents to test logical hypotheses, candidate specifications, preconditions, repairs, and other generated verification conditions using LiquidJava's solver.
+**Output:** `success: true` with `status` equal to `valid`, `invalid`, or `unknown`. Invalid results include a `counterexample` array (possibly empty); unknown results include the solver's `reason`. Invalid claims are normal tool results. Input and execution failures return `success: false` with an `error` containing `code` (`INVALID_INPUT` or `VERIFIER_ERROR`) and `message`, and set MCP `isError: true`.
 
-**Input:** Custom assumptions and a conclusion, or a complete custom verification condition.
-**Output:** Whether the verification condition is valid and, when invalid, a counterexample if one is available.
+With assumptions `["x >= 0"]` and conclusion `"x > 0"`, it returns:
+
+```json
+{
+  "success": true,
+  "status": "invalid",
+  "counterexample": [{"variable": "x", "value": "0"}]
+}
+```

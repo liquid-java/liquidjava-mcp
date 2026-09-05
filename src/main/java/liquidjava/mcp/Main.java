@@ -8,6 +8,8 @@ import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import java.io.PrintStream;
 import liquidjava.mcp.tools.VerifyTool;
+import liquidjava.mcp.tools.CheckValidityTool;
+import liquidjava.mcp.validity.ValidityChecker;
 import liquidjava.mcp.tools.GetLocalsTool;
 import liquidjava.mcp.tools.GetGlobalsTool;
 import liquidjava.mcp.tools.GetDiagnosticsTool;
@@ -32,7 +34,8 @@ public final class Main {
                     new VerifyTool(verifier, mapper).specification(),
                     new GetDiagnosticsTool(verifier, mapper).specification(),
                     new GetLocalsTool(inspector, mapper).specification(),
-                    new GetGlobalsTool(inspector, mapper).specification()
+                    new GetGlobalsTool(inspector, mapper).specification(),
+                    new CheckValidityTool(new ValidityChecker()::check, mapper).specification()
                 )
                 .build();
         Runtime.getRuntime().addShutdownHook(new Thread(server::close, "mcp-shutdown"));
