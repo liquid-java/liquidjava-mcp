@@ -18,7 +18,7 @@ Runs LiquidJava verification over the provided paths and returns the same repres
 Runs verification and exposes diagnostics in a machine-readable format, avoiding the need for agents to parse terminal output.
 
 **Input:** One or more file or folder paths.
-**Output:** Structured diagnostics, including type, severity, location, message, refinements, hints, and counterexamples when available.
+**Output:** Separate `errors` and `warnings` arrays of structured diagnostics, including type, severity, location, message, refinements, hints, and counterexamples when available.
 
 ### `get_local_context`
 

@@ -24,7 +24,7 @@ class VerifyToolTest {
         var received = new AtomicReference<VerifyRequest>();
         var tool = new VerifyTool(request -> {
             received.set(request);
-            return VerifyResult.completed(true, "Correct! Passed Verification.\n");
+            return VerifyResult.completed(true, "Correct! Passed Verification.\n", List.of(), List.of());
         }, McpJsonDefaults.getMapper());
         List<String> paths = List.of("file with spaces.java", "folder/../folder", "file with spaces.java");
         var result = tool.call(Map.of("paths", paths));
@@ -37,7 +37,7 @@ class VerifyToolTest {
     @Test
     void verificationFailureIsNotAToolExecutionError() {
         var tool = new VerifyTool(
-            request -> VerifyResult.completed(false, "Refinement Error"),
+            request -> VerifyResult.completed(false, "Refinement Error", List.of(), List.of()),
             McpJsonDefaults.getMapper()
         );
         var result = tool.call(Map.of("paths", List.of("Example.java")));

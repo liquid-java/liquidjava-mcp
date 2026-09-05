@@ -41,7 +41,7 @@ class McpServerTest {
     @Test
     void advertisesVerifyAndReturnsStructuredOutput() throws Exception {
         var tools = client.listTools().tools();
-        assertEquals(List.of("verify"), tools.stream().map(tool -> tool.name()).toList());
+        assertEquals(List.of("verify", "get_diagnostics"), tools.stream().map(tool -> tool.name()).toList());
 
         var result = client.callTool(verifyRequest("Valid.java"));
         assertFalse(result.isError());
@@ -70,6 +70,25 @@ class McpServerTest {
         var content = (Map<?, ?>) result.structuredContent();
         assertEquals(false, content.get("success"));
         assertEquals("INVALID_INPUT", ((Map<?, ?>) content.get("error")).get("code"));
+    }
+
+    @Test
+    void returnsDiagnosticsOverStdio() throws Exception {
+        var tool = client.listTools().tools().stream()
+                .filter(candidate -> candidate.name().equals("get_diagnostics")).findFirst().orElseThrow();
+        var result = client.callTool(new CallToolRequest("get_diagnostics", verifyRequest("Counterexample.java").arguments()));
+        assertFalse(result.isError());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(false, content.get("success"));
+        var diagnostic = (Map<?, ?>) ((List<?>) content.get("errors")).getFirst();
+        assertEquals("RefinementError", diagnostic.get("type"));
+        assertNotNull(diagnostic.get("counterexample"));
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
+        assertEquals(content, McpJsonDefaults.getMapper().readValue(
+                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
+        var invalid = client.callTool(new CallToolRequest("get_diagnostics", Map.of()));
+        assertTrue(invalid.isError());
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
     }
 
     private static CallToolRequest verifyRequest(String fixture) {

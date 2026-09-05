@@ -158,6 +158,8 @@ class LiquidJavaVerifierTest {
             var result = verify(fixture("Valid.java"));
             assertTrue(result.success(), result.toString());
             assertFalse(result.output().contains("Refinement Error"));
+            assertTrue(result.errors().isEmpty());
+            assertTrue(result.warnings().isEmpty());
         }
     }
 
@@ -174,6 +176,7 @@ class LiquidJavaVerifierTest {
                 var result = results.get(i).get();
                 assertEquals(i % 2 == 0, result.success(), result.toString());
                 assertNull(result.error());
+                assertEquals(i % 2 == 0, result.errors().isEmpty());
                 String other = i % 2 == 0 ? "Invalid.java" : "Valid.java";
                 assertFalse(result.output().contains(other), result.output());
                 assertEquals(1, result.output().split("Running LiquidJava on:", -1).length - 1);

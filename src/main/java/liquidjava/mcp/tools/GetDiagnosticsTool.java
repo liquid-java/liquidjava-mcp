@@ -13,24 +13,25 @@ import liquidjava.mcp.verification.Verifier;
 import liquidjava.mcp.verification.VerifyRequest;
 import liquidjava.mcp.verification.VerifyResult;
 
-public final class VerifyTool {
+public final class GetDiagnosticsTool {
     private final Verifier verifier;
     private final McpJsonMapper jsonMapper;
-    private final String schemaResourcePath = "/schemas/verify.json";
+    private final String schemaResourcePath = "/schemas/get_diagnostics.json";
     private final String description = """
-        Runs the LiquidJava verification and returns the same high-level terminal output a developer would see.
-        Prefer it over `get_diagnostics` for quick checks, when structured diagnostics are unnecessary, or to reduce token usage.
-        Receives one or more paths to verify and returns the verification status and plain-text LiquidJava output.
+        Runs the LiquidJava verification and returns diagnostics in a structured, machine-readable format instead of plain-text terminal output.
+        Prefer it over `verify` when you need to programmatically inspect, filter, or reason over individual errors or warnings.
+        Receives one or more paths to verify and returns a `errors` and a `warnings` arrays, each containing structured diagnostics with type, severity, location, message, refinements, hints, and counterexamples when available.
+        Locations use one-based lines and columns with inclusive ends.
     """;
 
-    public VerifyTool(Verifier verifier, McpJsonMapper jsonMapper) {
+    public GetDiagnosticsTool(Verifier verifier, McpJsonMapper jsonMapper) {
         this.verifier = verifier;
         this.jsonMapper = jsonMapper;
     }
 
     public SyncToolSpecification specification() {
         ToolSchemas schemas = ToolSchemas.load(schemaResourcePath, jsonMapper);
-        Tool tool = Tool.builder("verify", schemas.inputSchema())
+        Tool tool = Tool.builder("get_diagnostics", schemas.inputSchema())
             .description(description.stripIndent().trim())
             .outputSchema(schemas.outputSchema())
             .annotations(ToolAnnotations.builder().readOnlyHint(true).destructiveHint(false)
@@ -54,7 +55,8 @@ public final class VerifyTool {
     private CallToolResult toMcpResult(VerifyResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("success", result.success());
-        content.put("output", result.output());
+        content.put("errors", result.errors());
+        content.put("warnings", result.warnings());
         if (result.error() != null)
             content.put("error", Map.of("code", result.error().code().name(), "message", result.error().message()));
 

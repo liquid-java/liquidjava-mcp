@@ -31,7 +31,13 @@ public final class LiquidJavaVerifier implements Verifier {
                     arguments[i + 1] = request.paths().get(i);
                 }
                 CommandLineLauncher.main(arguments);
-                return VerifyResult.completed(!Diagnostics.getInstance().foundError(), plainOutput(bytes));
+                Diagnostics diagnostics = Diagnostics.getInstance();
+                return VerifyResult.completed(
+                    !diagnostics.foundError(),
+                    plainOutput(bytes),
+                    DiagnosticMapper.snapshot(diagnostics.getErrors()),
+                    DiagnosticMapper.snapshot(diagnostics.getWarnings())
+                );
             } catch (Exception | LinkageError e) {
                 e.printStackTrace(System.err);
                 String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
