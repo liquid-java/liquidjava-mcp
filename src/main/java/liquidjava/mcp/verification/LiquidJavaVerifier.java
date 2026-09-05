@@ -6,7 +6,7 @@ import liquidjava.mcp.runtime.LiquidJavaRunner;
 public final class LiquidJavaVerifier implements Verifier {
     @Override
     public VerifyResult verify(VerifyRequest request) {
-        return LiquidJavaRunner.run(request.paths(), false, output -> {
+        return LiquidJavaRunner.run(request.paths(), false, request.debug(), output -> {
             Diagnostics diagnostics = Diagnostics.getInstance();
             return VerifyResult.completed(
                     !diagnostics.foundError(), output,

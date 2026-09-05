@@ -47,6 +47,8 @@ public final class GetDiagnosticsTool {
     public CallToolResult call(Map<String, Object> arguments) {
         VerifyRequest request;
         try {
+            if (arguments == null || !arguments.keySet().equals(java.util.Set.of("paths")))
+                throw new IllegalArgumentException("expected exactly one argument: paths");
             request = VerifyRequest.fromArguments(arguments);
         } catch (IllegalArgumentException e) {
             return toMcpResult(VerifyResult.failed(VerifyResult.ErrorCode.INVALID_INPUT, e.getMessage(), ""));

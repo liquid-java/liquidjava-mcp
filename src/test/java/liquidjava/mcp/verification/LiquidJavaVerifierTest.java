@@ -30,7 +30,7 @@ class LiquidJavaVerifierTest {
     }
 
     private VerifyResult verify(String... paths) {
-        return verifier.verify(new VerifyRequest(List.of(paths)));
+        return verifier.verify(new VerifyRequest(List.of(paths), false));
     }
 
     @Test
@@ -168,7 +168,7 @@ class LiquidJavaVerifierTest {
         var jobs = new ArrayList<Callable<VerifyResult>>();
         for (int i = 0; i < 8; i++) {
             String file = fixture(i % 2 == 0 ? "Valid.java" : "Invalid.java");
-            jobs.add(() -> new LiquidJavaVerifier().verify(new VerifyRequest(List.of(file))));
+            jobs.add(() -> new LiquidJavaVerifier().verify(new VerifyRequest(List.of(file), false)));
         }
         try (var pool = Executors.newFixedThreadPool(4)) {
             var results = pool.invokeAll(jobs);
@@ -187,10 +187,10 @@ class LiquidJavaVerifierTest {
     @Test
     void requestMakesADefensiveCopyAndRejectsInvalidPaths() {
         var paths = new ArrayList<>(List.of("one.java"));
-        var request = new VerifyRequest(paths);
+        var request = new VerifyRequest(paths, false);
         paths.add("two.java");
         assertEquals(List.of("one.java"), request.paths());
         assertThrows(UnsupportedOperationException.class, () -> request.paths().add("three.java"));
-        assertThrows(IllegalArgumentException.class, () -> new VerifyRequest(List.of("a\u0000b")));
+        assertThrows(IllegalArgumentException.class, () -> new VerifyRequest(List.of("a\u0000b"), false));
     }
 }

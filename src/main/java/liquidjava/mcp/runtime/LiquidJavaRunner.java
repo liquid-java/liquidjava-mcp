@@ -16,8 +16,16 @@ public final class LiquidJavaRunner {
 
     private LiquidJavaRunner() {}
 
-    public static <T> T run(List<String> paths, boolean captureContext,
-            Function<String, T> snapshot, BiFunction<String, String, T> failure) {
+    /**
+     * Runs LiquidJava in a separate thread, capturing its output and returning a result based on the provided snapshot and failure functions.
+     */
+    public static <T> T run(
+        List<String> paths,
+        boolean captureContext,
+        boolean debug,
+        Function<String, T> snapshot,
+        BiFunction<String, String, T> failure
+    ) {
         synchronized (LOCK) {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             PrintStream previousOut = System.out;
@@ -27,7 +35,7 @@ public final class LiquidJavaRunner {
                 CommandLineArgs args = CommandLineLauncher.cmdArgs;
                 args.help = false;
                 args.version = false;
-                args.debugMode = false;
+                args.debugMode = debug;
                 args.lspMode = captureContext;
                 args.paths = null;
                 String[] arguments = new String[paths.size() + 1];
@@ -43,6 +51,7 @@ public final class LiquidJavaRunner {
                 return failure.apply(message, Utils.getPlainOutput(bytes));
             } finally {
                 CommandLineLauncher.cmdArgs.lspMode = false;
+                CommandLineLauncher.cmdArgs.debugMode = false;
                 System.setOut(previousOut);
             }
         }

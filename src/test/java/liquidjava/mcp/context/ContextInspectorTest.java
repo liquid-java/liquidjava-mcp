@@ -44,7 +44,7 @@ class ContextInspectorTest {
                 return null;
             });
             jobs.add(() -> {
-                var result = new LiquidJavaVerifier().verify(new VerifyRequest(List.of("src/test/resources/fixtures/Invalid.java")));
+                var result = new LiquidJavaVerifier().verify(new VerifyRequest(List.of("src/test/resources/fixtures/Invalid.java"), false));
                 assertFalse(result.success());
                 assertNull(result.error());
                 assertFalse(result.errors().isEmpty());

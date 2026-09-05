@@ -55,6 +55,25 @@ class McpServerTest {
     }
 
     @Test
+    void returnsDebugOutputOverStdioWithoutLeakingIntoTheNextCall() throws Exception {
+        var paths = verifyRequest("Invalid.java").arguments().get("paths");
+        var result = client.callTool(new CallToolRequest("verify", Map.of("paths", paths, "debug", true)));
+        assertFalse(result.isError());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(false, content.get("success"));
+        assertTrue(((String) content.get("output")).contains("[SMT]"));
+        assertTrue(((String) content.get("output")).contains("Refinement Error"));
+        assertEquals(content, McpJsonDefaults.getMapper().readValue(
+                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
+
+        var quiet = client.callTool(verifyRequest("Valid.java"));
+        assertFalse(quiet.isError());
+        var quietContent = (Map<?, ?>) quiet.structuredContent();
+        assertEquals(true, quietContent.get("success"));
+        assertFalse(((String) quietContent.get("output")).contains("[SMT]"));
+    }
+
+    @Test
     void reportsRefinementFailureAsANormalToolResult() {
         var result = client.callTool(verifyRequest("Invalid.java"));
         assertFalse(result.isError());

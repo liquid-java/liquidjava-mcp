@@ -20,7 +20,8 @@ public final class ContextInspector {
     private ContextResult inspect(ContextRequest request, Supplier<Map<String, Object>> snapshot) {
         return LiquidJavaRunner.run(
             List.of(request.file()),
-            true,
+            true, 
+            false,
             output -> ContextResult.completed(!Diagnostics.getInstance().foundError(), snapshot.get()),
             (message, output) -> ContextResult.failed(ContextResult.ErrorCode.VERIFIER_ERROR, message)
         );

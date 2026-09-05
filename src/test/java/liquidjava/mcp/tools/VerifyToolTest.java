@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+@org.junit.jupiter.api.parallel.ResourceLock("liquidjava-global-state")
+@org.junit.jupiter.api.parallel.ResourceLock("java.lang.System.out")
 class VerifyToolTest {
     private static final TypeRef<Map<String, Object>> MAP = new TypeRef<>() {};
 
@@ -32,6 +34,24 @@ class VerifyToolTest {
         assertFalse(result.isError());
         assertEquals(Map.of("success", true, "output", "Correct! Passed Verification.\n"), result.structuredContent());
         assertEquals(result.structuredContent(), McpJsonDefaults.getMapper().readValue(((TextContent) result.content().getFirst()).text(), MAP));
+    }
+
+    @Test
+    void returnsDebugOutputWhenRequestedAndDefaultsToQuietOutput() {
+        var tool = new VerifyTool(new liquidjava.mcp.verification.LiquidJavaVerifier(), McpJsonDefaults.getMapper());
+        for (var arguments : List.of(
+                Map.<String, Object>of("paths", List.of("src/test/resources/fixtures/Valid.java"), "debug", true),
+                Map.<String, Object>of("paths", List.of("src/test/resources/fixtures/Valid.java")),
+                Map.<String, Object>of("paths", List.of("src/test/resources/fixtures/Valid.java"), "debug", false))) {
+            var result = tool.call(arguments);
+            assertFalse(result.isError(), result.toString());
+            var content = (Map<?, ?>) result.structuredContent();
+            assertEquals(true, content.get("success"));
+            String output = (String) content.get("output");
+            assertEquals(Boolean.TRUE.equals(arguments.get("debug")), output.contains("[SMT]"), output);
+            assertFalse(output.contains("\u001B"));
+            assertFalse(liquidjava.api.CommandLineLauncher.cmdArgs.debugMode);
+        }
     }
 
     @Test
@@ -61,11 +81,16 @@ class VerifyToolTest {
     }
 
     @Test
-    void advertisesOnlyThePathsInputAndAResultSchema() {
+    void advertisesPathsAndOptionalDebugAndAResultSchema() {
         var tool = new VerifyTool(request -> fail("not invoked"), McpJsonDefaults.getMapper()).specification().tool();
         assertEquals("verify", tool.name());
         assertEquals(List.of("paths"), tool.inputSchema().get("required"));
         assertEquals(false, tool.inputSchema().get("additionalProperties"));
+        var properties = (Map<?, ?>) tool.inputSchema().get("properties");
+        var debug = (Map<?, ?>) properties.get("debug");
+        assertNotNull(debug);
+        assertEquals("boolean", debug.get("type"));
+        assertEquals(false, debug.get("default"));
         assertEquals(List.of("success", "output"), tool.outputSchema().get("required"));
         assertTrue(tool.annotations().readOnlyHint());
     }
@@ -83,11 +108,17 @@ class VerifyToolTest {
     }
 
     private static Stream<Map<String, Object>> invalidArguments() {
+        var nullDebug = new java.util.HashMap<String, Object>();
+        nullDebug.put("paths", List.of("x.java"));
+        nullDebug.put("debug", null);
         return Stream.of(
             null, Map.of(), Map.of("paths", "x.java"), Map.of("paths", 1),
             Map.of("paths", List.of()), Map.of("paths", List.of("")), Map.of("paths", List.of(" \t\n")),
             Map.of("paths", List.of("x\u0000.java")), Map.of("paths", List.of(1)),
-            Map.of("paths", Arrays.asList("x.java", null)), Map.of("paths", List.of("x.java"), "debug", true)
+            Map.of("paths", Arrays.asList("x.java", null)), Map.of("paths", List.of("x.java"), "debug", "true"),
+            Map.of("paths", List.of("x.java"), "debug", 1),
+            nullDebug,
+            Map.of("paths", List.of("x.java"), "extra", true)
         );
     }
 }

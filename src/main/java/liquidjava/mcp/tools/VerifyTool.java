@@ -21,7 +21,8 @@ public final class VerifyTool {
     private final String name = "verify";
     private final String description = """
         Runs LiquidJava and returns the same high-level terminal output a developer would see.
-        Prefer it over `get_diagnostics` for quick checks, when structured diagnostics are unnecessary, or to reduce token usage.
+        Prefer it over `get_diagnostics` for quick checks, to reduce token usage, or to inspect debug information by setting `debug` to true.
+        Debug output shows verification conditions, their simplifications, and solver results, including counterexamples.
         Receives one or more paths to verify and returns the verification status and plain-text LiquidJava output.
     """;
 

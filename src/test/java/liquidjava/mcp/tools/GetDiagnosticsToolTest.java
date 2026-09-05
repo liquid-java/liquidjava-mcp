@@ -113,6 +113,7 @@ class GetDiagnosticsToolTest {
         var rejecting = new GetDiagnosticsTool(request -> fail("must not run"), McpJsonDefaults.getMapper());
         for (var arguments : List.of(Map.<String, Object>of(), Map.<String, Object>of("paths", List.of()),
                 Map.<String, Object>of("paths", List.of(" ")), Map.<String, Object>of("paths", List.of(1)),
+                Map.<String, Object>of("paths", List.of("a.java"), "debug", true),
                 Map.<String, Object>of("paths", List.of("a.java"), "extra", true))) {
             var result = rejecting.call(arguments);
             assertTrue(result.isError());

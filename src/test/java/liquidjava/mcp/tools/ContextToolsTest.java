@@ -45,7 +45,7 @@ class ContextToolsTest {
         var empty = (Map<?, ?>) globals.call(Map.of("file", "src/test/resources/fixtures/Valid.java")).structuredContent();
         for (String key : List.of("aliases", "ghosts", "states")) assertEquals(List.of(), empty.get(key));
         assertFalse(CommandLineLauncher.cmdArgs.lspMode);
-        assertTrue(verifier.verify(new VerifyRequest(List.of("src/test/resources/fixtures/Valid.java"))).success());
+        assertTrue(verifier.verify(new VerifyRequest(List.of("src/test/resources/fixtures/Valid.java"), false)).success());
         assertEquals(first.structuredContent(), globals.call(Map.of("file", FILE)).structuredContent());
     }
 

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public record VerifyRequest(List<String> paths) {
+public record VerifyRequest(List<String> paths, boolean debug) {
     public VerifyRequest {
         if (paths == null || paths.isEmpty())
             throw new IllegalArgumentException("paths must contain at least one file or directory");
@@ -25,11 +25,15 @@ public record VerifyRequest(List<String> paths) {
     }
 
     public static VerifyRequest fromArguments(Map<String, Object> arguments) {
-        if (arguments == null || !arguments.keySet().equals(java.util.Set.of("paths")))
-            throw new IllegalArgumentException("expected exactly one argument: paths");
+        if (arguments == null || !arguments.containsKey("paths")
+                || !java.util.Set.of("paths", "debug").containsAll(arguments.keySet()))
+            throw new IllegalArgumentException("expected paths and optional debug");
 
         if (!(arguments.get("paths") instanceof List<?> paths))
             throw new IllegalArgumentException("paths must be an array of strings");
+
+        if (arguments.containsKey("debug") && !(arguments.get("debug") instanceof Boolean))
+            throw new IllegalArgumentException("debug must be a boolean");
 
         List<String> values = new ArrayList<>(paths.size());
         for (Object path : paths) {
@@ -38,6 +42,6 @@ public record VerifyRequest(List<String> paths) {
 
             values.add(value);
         }
-        return new VerifyRequest(values);
+        return new VerifyRequest(values, Boolean.TRUE.equals(arguments.get("debug")));
     }
 }
