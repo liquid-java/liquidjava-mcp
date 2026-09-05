@@ -48,7 +48,7 @@ final class DiagnosticMapper {
         return Map.copyOf(result);
     }
 
-    private static Map<String, Object> location(SourcePosition position) {
+    static Map<String, Object> location(SourcePosition position) {
         if (position == null || !position.isValidPosition() || position.getFile() == null) return null;
         return Map.of(
             "file", position.getFile().getAbsolutePath(),

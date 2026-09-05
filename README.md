@@ -24,15 +24,19 @@ Runs verification and exposes diagnostics in a machine-readable format, avoiding
 
 Exposes the verification context available at a specific point in the program.
 
-**Input:** A file path and source position.
-**Output:** Variables at the given position, together with their refinements.
+**Input:** `{"file": "/path/to/Example.java", "line": 12, "column": 9}`. Lines and columns are one-based; the file must be an existing Java source file.
+**Output:** `success` and `variables`. Each variable includes its source name, verifier `internalName`, Java type, refinement predicate, and source location (inclusive ends). Entries include declarations and refinement instances recorded before the position in enclosing scopes. Internal names preserve relationships between predicates. Positions outside recorded scopes return an empty array. This exposes source-filtered verifier history; synthesized branch-merge instances can carry the original declaration location, so it does not reconstruct the exact solver state at the cursor.
+
+Each call verifies the file afresh. Verification errors set `success` to false while preserving any available context. Diagnostics are available separately through `get_diagnostics`. Invalid inputs and verifier execution failures also return an `error` and set the MCP error flag.
 
 ### `get_globals`
 
 Allows agents to inspect LiquidJava-specific definitions available to the program.
 
-**Input:** A file path and, optionally, a source position.
-**Output:** Global aliases, ghosts, and states.
+**Input:** `{"file": "/path/to/Example.java"}`, optionally with both `line` and `column` using the same one-based convention as `get_locals`.
+**Output:** `success`, `aliases`, `ghosts`, and `states`. Aliases include parameter names, parameter types, and predicates; ghosts and states include qualified names, return types, parameter types, and their defining refinements when available.
+
+Definitions come from the file's fresh verification context. The optional position does not narrow global definitions. Error handling matches `get_locals`.
 
 ### `get_refinement`
 

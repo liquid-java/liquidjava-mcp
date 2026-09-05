@@ -41,7 +41,7 @@ class McpServerTest {
     @Test
     void advertisesVerifyAndReturnsStructuredOutput() throws Exception {
         var tools = client.listTools().tools();
-        assertEquals(List.of("verify", "get_diagnostics"), tools.stream().map(tool -> tool.name()).toList());
+        assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals"), tools.stream().map(tool -> tool.name()).toList());
 
         var result = client.callTool(verifyRequest("Valid.java"));
         assertFalse(result.isError());
@@ -89,6 +89,39 @@ class McpServerTest {
         var invalid = client.callTool(new CallToolRequest("get_diagnostics", Map.of()));
         assertTrue(invalid.isError());
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
+    }
+
+    @Test
+    void returnsContextOverStdio() throws Exception {
+        String file = Path.of("src/test/resources/fixtures/Context.java").toAbsolutePath().toString();
+        for (String name : List.of("get_locals", "get_globals")) {
+            var tool = client.listTools().tools().stream()
+                    .filter(t -> t.name().equals(name)).findFirst().orElseThrow();
+            var arguments = name.equals("get_locals")
+                    ? Map.<String, Object>of("file", file, "line", 12, "column", 9)
+                    : Map.<String, Object>of("file", file);
+            var result = client.callTool(new CallToolRequest(name, arguments));
+            assertFalse(result.isError(), result.toString());
+            var content = (Map<?, ?>) result.structuredContent();
+            assertFalse(content.containsKey("errors"));
+            assertFalse(content.containsKey("warnings"));
+            assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
+            assertEquals(content, McpJsonDefaults.getMapper().readValue(
+                    ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
+            if (name.equals("get_locals")) {
+                var variables = (List<Map<String, Object>>) content.get("variables");
+                assertTrue(variables.stream().anyMatch(v -> v.get("name").equals("input")));
+                assertTrue(variables.stream().anyMatch(v -> v.get("name").equals("first")));
+                assertFalse(variables.stream().anyMatch(v -> List.of("nested", "last", "unrelated").contains(v.get("name"))));
+            } else {
+                assertTrue(((List<Map<String, Object>>) content.get("aliases")).stream().anyMatch(a -> a.get("name").equals("Positive")));
+                assertTrue(((List<Map<String, Object>>) content.get("ghosts")).stream().anyMatch(g -> g.get("name").equals("size")));
+                assertEquals(2, ((List<?>) content.get("states")).size());
+            }
+            var invalid = client.callTool(new CallToolRequest(name, Map.of()));
+            assertTrue(invalid.isError());
+            assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
+        }
     }
 
     private static CallToolRequest verifyRequest(String fixture) {

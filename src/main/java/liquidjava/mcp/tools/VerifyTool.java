@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import liquidjava.mcp.tools.schemas.ToolSchemas;
 import liquidjava.mcp.verification.Verifier;
 import liquidjava.mcp.verification.VerifyRequest;
 import liquidjava.mcp.verification.VerifyResult;
@@ -16,9 +18,9 @@ import liquidjava.mcp.verification.VerifyResult;
 public final class VerifyTool {
     private final Verifier verifier;
     private final McpJsonMapper jsonMapper;
-    private final String schemaResourcePath = "/schemas/verify.json";
+    private final String name = "verify";
     private final String description = """
-        Runs the LiquidJava verification and returns the same high-level terminal output a developer would see.
+        Runs LiquidJava and returns the same high-level terminal output a developer would see.
         Prefer it over `get_diagnostics` for quick checks, when structured diagnostics are unnecessary, or to reduce token usage.
         Receives one or more paths to verify and returns the verification status and plain-text LiquidJava output.
     """;
@@ -29,8 +31,8 @@ public final class VerifyTool {
     }
 
     public SyncToolSpecification specification() {
-        ToolSchemas schemas = ToolSchemas.load(schemaResourcePath, jsonMapper);
-        Tool tool = Tool.builder("verify", schemas.inputSchema())
+        ToolSchemas schemas = ToolSchemas.load(name, jsonMapper);
+        Tool tool = Tool.builder(name, schemas.inputSchema())
             .description(description.stripIndent().trim())
             .outputSchema(schemas.outputSchema())
             .annotations(ToolAnnotations.builder().readOnlyHint(true).destructiveHint(false)

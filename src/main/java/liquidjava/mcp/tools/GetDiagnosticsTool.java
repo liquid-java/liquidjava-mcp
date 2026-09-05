@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import liquidjava.mcp.tools.schemas.ToolSchemas;
 import liquidjava.mcp.verification.Verifier;
 import liquidjava.mcp.verification.VerifyRequest;
 import liquidjava.mcp.verification.VerifyResult;
@@ -16,9 +18,9 @@ import liquidjava.mcp.verification.VerifyResult;
 public final class GetDiagnosticsTool {
     private final Verifier verifier;
     private final McpJsonMapper jsonMapper;
-    private final String schemaResourcePath = "/schemas/get_diagnostics.json";
+    private final String name = "get_diagnostics";
     private final String description = """
-        Runs the LiquidJava verification and returns diagnostics in a structured, machine-readable format instead of plain-text terminal output.
+        Runs LiquidJava and returns diagnostics in a structured, machine-readable format instead of plain-text terminal output.
         Prefer it over `verify` when you need to programmatically inspect, filter, or reason over individual errors or warnings.
         Receives one or more paths to verify and returns a `errors` and a `warnings` arrays, each containing structured diagnostics with type, severity, location, message, refinements, hints, and counterexamples when available.
         Locations use one-based lines and columns with inclusive ends.
@@ -30,8 +32,8 @@ public final class GetDiagnosticsTool {
     }
 
     public SyncToolSpecification specification() {
-        ToolSchemas schemas = ToolSchemas.load(schemaResourcePath, jsonMapper);
-        Tool tool = Tool.builder("get_diagnostics", schemas.inputSchema())
+        ToolSchemas schemas = ToolSchemas.load(name, jsonMapper);
+        Tool tool = Tool.builder(name, schemas.inputSchema())
             .description(description.stripIndent().trim())
             .outputSchema(schemas.outputSchema())
             .annotations(ToolAnnotations.builder().readOnlyHint(true).destructiveHint(false)
