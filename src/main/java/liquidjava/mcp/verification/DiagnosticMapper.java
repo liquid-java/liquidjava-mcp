@@ -25,7 +25,17 @@ final class DiagnosticMapper {
         put(result, "declarationLocation", Utils.mapPosition(diagnostic.getDeclarationPosition()));
         put(result, "hint", diagnostic.getHint());
         put(result, "customMessage", diagnostic.getCustomMessage());
-        Map<String, String> refinements = switch (diagnostic) {
+        Map<String, String> refinements = getRefinements(diagnostic);
+        if (!refinements.isEmpty()) result.put("refinements", refinements);
+        if (diagnostic instanceof RefinementError error && !error.getCounterexample().isEmpty()) {
+            result.put("counterexample", error.getCounterexample().assignments().stream()
+                .map(pair -> Map.of("variable", pair.first(), "value", pair.second())).toList());
+        }
+        return Map.copyOf(result);
+    }
+
+    private static Map<String, String> getRefinements(LJDiagnostic diagnostic) {
+        return switch (diagnostic) {
             case RefinementError e -> Map.of(
                 "expected", e.getExpected().toString(),
                 "found", e.getFound().getImplication().toPredicate().toString()
@@ -40,12 +50,6 @@ final class DiagnosticMapper {
             case UnsatisfiableRefinementWarning w -> Map.of("refinement", w.getRefinement());
             default -> Map.of();
         };
-        if (!refinements.isEmpty()) result.put("refinements", refinements);
-        if (diagnostic instanceof RefinementError error && !error.getCounterexample().isEmpty()) {
-            result.put("counterexample", error.getCounterexample().assignments().stream()
-                .map(pair -> Map.of("variable", pair.first(), "value", pair.second())).toList());
-        }
-        return Map.copyOf(result);
     }
 
     private static void put(Map<String, Object> result, String key, Object value) {
