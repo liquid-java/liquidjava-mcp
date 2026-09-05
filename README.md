@@ -20,19 +20,19 @@ Runs verification and exposes diagnostics in a machine-readable format, avoiding
 **Input:** One or more file or folder paths.
 **Output:** Separate `errors` and `warnings` arrays of structured diagnostics, including type, severity, location, message, refinements, hints, and counterexamples when available.
 
-### `get_local_context`
+### `get_locals`
 
 Exposes the verification context available at a specific point in the program.
 
 **Input:** A file path and source position.
-**Output:** Variables and other local context elements visible at that position, together with their refinements.
+**Output:** Variables at the given position, together with their refinements.
 
-### `get_global_context`
+### `get_globals`
 
 Allows agents to inspect LiquidJava-specific definitions available to the program.
 
 **Input:** A file path and, optionally, a source position.
-**Output:** Global aliases, ghost functions, states, and other globally available refinement definitions.
+**Output:** Global aliases, ghosts, and states.
 
 ### `get_refinement`
 
