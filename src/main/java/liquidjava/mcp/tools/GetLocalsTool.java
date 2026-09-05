@@ -48,7 +48,7 @@ public final class GetLocalsTool {
         } catch (IllegalArgumentException e) {
             return toMcpResult(ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, e.getMessage()));
         }
-        var result = inspector.getLocals(request);
+        ContextResult result = inspector.getLocals(request);
         return toMcpResult(result);
     }
 

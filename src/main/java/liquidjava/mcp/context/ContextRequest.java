@@ -10,31 +10,41 @@ public record ContextRequest(String file, Integer line, Integer column) {
     public ContextRequest {
         if (file == null || file.isBlank())
             throw new IllegalArgumentException("file must be a nonblank string");
+
         Path path = Path.of(file).toAbsolutePath().normalize();
         if (!Files.isRegularFile(path) || !file.endsWith(".java"))
             throw new IllegalArgumentException("file must be an existing Java source file");
+
         file = path.toString();
-        if ((line == null) != (column == null) || (line != null && (line < 1 || column < 1)))
-            throw new IllegalArgumentException("line and column must both be positive one-based integers");
+        if (line != null || column != null) {
+            if (line == null || column == null || line < 1 || column < 1)
+                throw new IllegalArgumentException("line and column must both be positive integers");
+        }
     }
 
     public static ContextRequest fromArguments(Map<String, Object> arguments) {
-        if (arguments == null || !(arguments.get("file") instanceof String file)
-                || !(arguments.keySet().equals(Set.of("file", "line", "column"))
-                    || arguments.keySet().equals(Set.of("file"))))
+        if (arguments == null || !(arguments.get("file") instanceof String file))
             throw new IllegalArgumentException("expected file and optionally both line and column");
-        return new ContextRequest(file,
-                arguments.containsKey("line") ? coordinate(arguments.get("line")) : null,
-                arguments.containsKey("column") ? coordinate(arguments.get("column")) : null);
+
+        if (arguments.keySet().equals(Set.of("file")))
+            return new ContextRequest(file, null, null);
+
+        if (!arguments.keySet().equals(Set.of("file", "line", "column")))
+            throw new IllegalArgumentException("expected file and optionally both line and column");
+
+        int line = coordinate(arguments.get("line"));
+        int column = coordinate(arguments.get("column"));
+        return new ContextRequest(file, line, column);
     }
 
     private static int coordinate(Object value) {
-        if (value instanceof Number number) {
-            try {
-                return new BigDecimal(number.toString()).intValueExact();
-            } catch (ArithmeticException | NumberFormatException ignored) {
-            }
+        if (!(value instanceof Number number))
+            throw new IllegalArgumentException("line and column must be positive integers");
+
+        try {
+            return new BigDecimal(number.toString()).intValueExact();
+        } catch (ArithmeticException | NumberFormatException e) {
+            throw new IllegalArgumentException("line and column must be positive integers", e);
         }
-        throw new IllegalArgumentException("line and column must be positive one-based integers");
     }
 }

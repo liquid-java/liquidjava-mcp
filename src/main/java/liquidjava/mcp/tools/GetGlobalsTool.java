@@ -47,7 +47,7 @@ public final class GetGlobalsTool {
         } catch (IllegalArgumentException e) {
             return toMcpResult(ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, e.getMessage()));
         }
-        var result = inspector.getGlobals(request);
+        ContextResult result = inspector.getGlobals(request);
         return toMcpResult(result);
     }
 
