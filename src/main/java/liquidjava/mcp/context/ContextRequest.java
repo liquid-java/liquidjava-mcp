@@ -1,4 +1,4 @@
-package liquidjava.mcp.verification;
+package liquidjava.mcp.context;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;

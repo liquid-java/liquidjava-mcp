@@ -7,7 +7,7 @@ import java.util.Collection;
 import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.errors.*;
 import liquidjava.diagnostics.warnings.UnsatisfiableRefinementWarning;
-import spoon.reflect.cu.SourcePosition;
+import liquidjava.mcp.utils.Utils;
 
 final class DiagnosticMapper {
     private DiagnosticMapper() {}
@@ -21,8 +21,8 @@ final class DiagnosticMapper {
         result.put("type", diagnostic.getClass().getSimpleName());
         result.put("severity", diagnostic instanceof LJError ? "error" : "warning");
         result.put("message", diagnostic.getMessage());
-        put(result, "location", location(diagnostic.getPosition()));
-        put(result, "declarationLocation", location(diagnostic.getDeclarationPosition()));
+        put(result, "location", Utils.mapPosition(diagnostic.getPosition()));
+        put(result, "declarationLocation", Utils.mapPosition(diagnostic.getDeclarationPosition()));
         put(result, "hint", diagnostic.getHint());
         put(result, "customMessage", diagnostic.getCustomMessage());
         Map<String, String> refinements = switch (diagnostic) {
@@ -46,15 +46,6 @@ final class DiagnosticMapper {
                 .map(pair -> Map.of("variable", pair.first(), "value", pair.second())).toList());
         }
         return Map.copyOf(result);
-    }
-
-    static Map<String, Object> location(SourcePosition position) {
-        if (position == null || !position.isValidPosition() || position.getFile() == null) return null;
-        return Map.of(
-            "file", position.getFile().getAbsolutePath(),
-            "startLine", position.getLine(), "startColumn", position.getColumn(),
-            "endLine", position.getEndLine(), "endColumn", position.getEndColumn()
-        );
     }
 
     private static void put(Map<String, Object> result, String key, Object value) {

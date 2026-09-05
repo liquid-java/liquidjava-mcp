@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import liquidjava.api.CommandLineLauncher;
+import liquidjava.mcp.context.ContextInspector;
 import liquidjava.mcp.verification.LiquidJavaVerifier;
 import liquidjava.mcp.verification.VerifyRequest;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 @ResourceLock("java.lang.System.out")
 class ContextToolsTest {
     private final LiquidJavaVerifier verifier = new LiquidJavaVerifier();
-    private final GetLocalsTool locals = new GetLocalsTool(verifier, McpJsonDefaults.getMapper());
-    private final GetGlobalsTool globals = new GetGlobalsTool(verifier, McpJsonDefaults.getMapper());
+    private final ContextInspector inspector = new ContextInspector();
+    private final GetLocalsTool locals = new GetLocalsTool(inspector, McpJsonDefaults.getMapper());
+    private final GetGlobalsTool globals = new GetGlobalsTool(inspector, McpJsonDefaults.getMapper());
     private static final String FILE = "src/test/resources/fixtures/Context.java";
 
     @Test

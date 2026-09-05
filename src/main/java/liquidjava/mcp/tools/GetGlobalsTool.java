@@ -11,21 +11,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import liquidjava.mcp.context.ContextRequest;
 import liquidjava.mcp.tools.schemas.ToolSchemas;
-import liquidjava.mcp.verification.ContextRequest;
-import liquidjava.mcp.verification.LiquidJavaVerifier;
-import liquidjava.mcp.verification.VerifyResult;
+import liquidjava.mcp.context.ContextInspector;
+import liquidjava.mcp.context.ContextResult;
 
 public final class GetGlobalsTool {
-    private final LiquidJavaVerifier verifier;
+    private final ContextInspector inspector;
     private final McpJsonMapper jsonMapper;
     private final String name = "get_globals";
     private final String description = """
         Runs LiquidJava on a Java file and returns global aliases, ghosts, and states.
     """;
 
-    public GetGlobalsTool(LiquidJavaVerifier verifier, McpJsonMapper jsonMapper) {
-        this.verifier = verifier;
+    public GetGlobalsTool(ContextInspector inspector, McpJsonMapper jsonMapper) {
+        this.inspector = inspector;
         this.jsonMapper = jsonMapper;
     }
 
@@ -45,18 +45,18 @@ public final class GetGlobalsTool {
         try {
             request = ContextRequest.fromArguments(arguments);
         } catch (IllegalArgumentException e) {
-            return toMcpResult(VerifyResult.failed(VerifyResult.ErrorCode.INVALID_INPUT, e.getMessage(), ""), Map.of());
+            return toMcpResult(ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, e.getMessage()));
         }
-        var result = verifier.getGlobals(request);
-        return toMcpResult(result.verification(), result.context());
+        var result = inspector.getGlobals(request);
+        return toMcpResult(result);
     }
 
-    private CallToolResult toMcpResult(VerifyResult result, Map<String, Object> context) {
+    private CallToolResult toMcpResult(ContextResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("success", result.success());
-        content.put("aliases", context.getOrDefault("aliases", List.of()));
-        content.put("ghosts", context.getOrDefault("ghosts", List.of()));
-        content.put("states", context.getOrDefault("states", List.of()));
+        content.put("aliases", result.context().getOrDefault("aliases", List.of()));
+        content.put("ghosts", result.context().getOrDefault("ghosts", List.of()));
+        content.put("states", result.context().getOrDefault("states", List.of()));
         if (result.error() != null)
             content.put("error", Map.of("code", result.error().code().name(), "message", result.error().message()));
         try {

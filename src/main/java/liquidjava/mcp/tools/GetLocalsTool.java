@@ -11,13 +11,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import liquidjava.mcp.context.ContextRequest;
 import liquidjava.mcp.tools.schemas.ToolSchemas;
-import liquidjava.mcp.verification.ContextRequest;
-import liquidjava.mcp.verification.LiquidJavaVerifier;
-import liquidjava.mcp.verification.VerifyResult;
+import liquidjava.mcp.context.ContextInspector;
+import liquidjava.mcp.context.ContextResult;
 
 public final class GetLocalsTool {
-    private final LiquidJavaVerifier verifier;
+    private final ContextInspector inspector;
     private final McpJsonMapper jsonMapper;
     private final String name = "get_locals";
     private final String description = """
@@ -25,8 +25,8 @@ public final class GetLocalsTool {
         Locations use one-based lines and columns with inclusive ends.
     """;
 
-    public GetLocalsTool(LiquidJavaVerifier verifier, McpJsonMapper jsonMapper) {
-        this.verifier = verifier;
+    public GetLocalsTool(ContextInspector inspector, McpJsonMapper jsonMapper) {
+        this.inspector = inspector;
         this.jsonMapper = jsonMapper;
     }
 
@@ -45,19 +45,17 @@ public final class GetLocalsTool {
         ContextRequest request;
         try {
             request = ContextRequest.fromArguments(arguments);
-            if (request.line() == null)
-                throw new IllegalArgumentException("expected exactly file, line, and column");
         } catch (IllegalArgumentException e) {
-            return toMcpResult(VerifyResult.failed(VerifyResult.ErrorCode.INVALID_INPUT, e.getMessage(), ""), Map.of());
+            return toMcpResult(ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, e.getMessage()));
         }
-        var result = verifier.getLocals(request);
-        return toMcpResult(result.verification(), result.context());
+        var result = inspector.getLocals(request);
+        return toMcpResult(result);
     }
 
-    private CallToolResult toMcpResult(VerifyResult result, Map<String, Object> context) {
+    private CallToolResult toMcpResult(ContextResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("success", result.success());
-        content.put("variables", context.getOrDefault("variables", List.of()));
+        content.put("variables", result.context().getOrDefault("variables", List.of()));
         if (result.error() != null)
             content.put("error", Map.of("code", result.error().code().name(), "message", result.error().message()));
         try {

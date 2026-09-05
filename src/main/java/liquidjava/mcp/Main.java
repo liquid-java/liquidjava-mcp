@@ -12,6 +12,7 @@ import liquidjava.mcp.tools.GetLocalsTool;
 import liquidjava.mcp.tools.GetGlobalsTool;
 import liquidjava.mcp.tools.GetDiagnosticsTool;
 import liquidjava.mcp.verification.LiquidJavaVerifier;
+import liquidjava.mcp.context.ContextInspector;
 
 public final class Main {
     private Main() {}
@@ -22,6 +23,7 @@ public final class Main {
         McpJsonMapper mapper = McpJsonDefaults.getMapper();
         StdioServerTransportProvider transport = new StdioServerTransportProvider(mapper, System.in, protocolOutput);
         LiquidJavaVerifier verifier = new LiquidJavaVerifier();
+        ContextInspector inspector = new ContextInspector();
         McpSyncServer server = McpServer.sync(transport)
                 .serverInfo("liquidjava-mcp", "0.1.0-SNAPSHOT")
                 .capabilities(ServerCapabilities.builder().tools(false).build())
@@ -29,8 +31,8 @@ public final class Main {
                 .tools(
                     new VerifyTool(verifier, mapper).specification(),
                     new GetDiagnosticsTool(verifier, mapper).specification(),
-                    new GetLocalsTool(verifier, mapper).specification(),
-                    new GetGlobalsTool(verifier, mapper).specification()
+                    new GetLocalsTool(inspector, mapper).specification(),
+                    new GetGlobalsTool(inspector, mapper).specification()
                 )
                 .build();
         Runtime.getRuntime().addShutdownHook(new Thread(server::close, "mcp-shutdown"));

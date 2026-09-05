@@ -1,4 +1,4 @@
-package liquidjava.mcp.verification;
+package liquidjava.mcp.context;
 
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import liquidjava.mcp.utils.Utils;
 import liquidjava.processor.context.Context;
 import liquidjava.processor.context.ContextHistory;
 import liquidjava.processor.context.GhostState;
@@ -66,7 +68,7 @@ final class ContextMapper {
         return Map.of("name", VariableFormatter.withoutInstance(variable.getName()),
                 "internalName", variable.getName(), "type", variable.getType().toString(),
                 "refinement", variable.getMainRefinement().toString(),
-                "location", DiagnosticMapper.location(variable.getPlacementInCode().getPosition()));
+                "location", Utils.mapPosition(variable.getPlacementInCode().getPosition()));
     }
 
     private static Map<String, Object> ghost(GhostFunction ghost) {
