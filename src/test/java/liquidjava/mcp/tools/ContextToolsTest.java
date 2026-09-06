@@ -13,6 +13,7 @@ import liquidjava.mcp.context.ContextInspector;
 import liquidjava.mcp.verification.LiquidJavaVerifier;
 import liquidjava.mcp.verification.VerifyRequest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -57,6 +58,22 @@ class ContextToolsTest {
         assertFalse(CommandLineLauncher.cmdArgs.lspMode);
         assertTrue(verifier.verify(new VerifyRequest("src/test/resources/examples/Valid.java", false)).success());
         assertEquals(first.structuredContent(), globals.call(globalArguments(FILE)).structuredContent());
+    }
+
+    @Test
+    void missingPathsReturnInputErrors(@TempDir Path temporary) {
+        String missing = temporary.resolve("missing.java").toString();
+        for (var response : List.of(
+                Map.entry(globals.call(Map.of("path", missing)), globals.specification().tool().outputSchema()),
+                Map.entry(globals.call(Map.of("path", missing, "file", FILE)), globals.specification().tool().outputSchema()),
+                Map.entry(locals.call(Map.of("path", missing, "file", FILE, "line", 1, "column", 1)), locals.specification().tool().outputSchema()))) {
+            var result = response.getKey();
+            assertTrue(result.isError(), result.toString());
+            var content = (Map<?, ?>) result.structuredContent();
+            assertEquals(Map.of("code", "INVALID_INPUT", "message", "The path " + missing + " was not found"),
+                    content.get("error"));
+            assertTrue(McpJsonDefaults.getSchemaValidator().validate(response.getValue(), content).valid());
+        }
     }
 
     @Test

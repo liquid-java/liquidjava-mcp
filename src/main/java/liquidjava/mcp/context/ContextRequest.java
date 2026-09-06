@@ -12,7 +12,8 @@ public record ContextRequest(String path, String file, Integer line, Integer col
         if (path == null || path.isBlank())
             throw new IllegalArgumentException("path must be a nonblank string");
         try {
-            Path.of(path);
+            if (!Files.exists(Path.of(path)))
+                throw new IllegalArgumentException("The path " + path + " was not found");
         } catch (InvalidPathException e) {
             throw new IllegalArgumentException("invalid path: " + e.getReason(), e);
         }
