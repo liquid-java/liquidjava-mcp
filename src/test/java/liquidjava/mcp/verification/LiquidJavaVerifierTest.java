@@ -25,8 +25,8 @@ class LiquidJavaVerifierTest {
     @TempDir Path temporary;
     private final LiquidJavaVerifier verifier = new LiquidJavaVerifier();
 
-    private static String fixture(String name) {
-        return Path.of("src", "test", "resources", "fixtures", name).toString();
+    private static String example(String name) {
+        return Path.of("src", "test", "resources", "examples", name).toString();
     }
 
     private VerifyResult verify(String... paths) {
@@ -35,7 +35,7 @@ class LiquidJavaVerifierTest {
 
     @Test
     void verifiesAValidFile() {
-        var result = verify(fixture("Valid.java"));
+        var result = verify(example("Valid.java"));
         assertTrue(result.success(), result.toString());
         assertNull(result.error());
         assertTrue(result.output().contains("Correct! Passed Verification."));
@@ -43,7 +43,7 @@ class LiquidJavaVerifierTest {
 
     @Test
     void reportsRefinementErrorsWithoutParsingOutputForSuccess() {
-        var result = verify(fixture("Invalid.java"));
+        var result = verify(example("Invalid.java"));
         assertFalse(result.success());
         assertNull(result.error());
         assertTrue(result.output().contains("Refinement Error"));
@@ -53,7 +53,7 @@ class LiquidJavaVerifierTest {
 
     @Test
     void warningsAloneStillPass() {
-        var result = verify(fixture("Warning.java"));
+        var result = verify(example("Warning.java"));
         assertTrue(result.success(), result.toString());
         assertNull(result.error());
         assertTrue(result.output().contains("Warning"), result.output());
@@ -63,8 +63,8 @@ class LiquidJavaVerifierTest {
 
     @Test
     void verifiesDirectoriesAndCooperatingFilesTogether() {
-        var folder = verify(fixture("joint"));
-        var files = verify(fixture("joint/Contract.java"), fixture("joint/Caller.java"));
+        var folder = verify(example("joint"));
+        var files = verify(example("joint/Contract.java"), example("joint/Caller.java"));
         assertFalse(folder.success(), folder.toString());
         assertFalse(files.success(), files.toString());
         assertNull(folder.error());
@@ -77,7 +77,7 @@ class LiquidJavaVerifierTest {
     @Test
     void missingPathUsesLiquidJavaDiagnostic() {
         String missing = temporary.resolve("missing.java").toString();
-        var result = verify(fixture("Valid.java"), missing);
+        var result = verify(example("Valid.java"), missing);
         assertFalse(result.success());
         assertNull(result.error());
         assertTrue(result.output().contains("The path " + missing + " was not found"));
@@ -87,7 +87,7 @@ class LiquidJavaVerifierTest {
     @Test
     void supportsSpacesAndUnicodeInAbsolutePaths() throws Exception {
         Path file = Files.createDirectories(temporary.resolve("espaço com acentuação")).resolve("Valid.java");
-        Files.copy(Path.of(fixture("Valid.java")), file);
+        Files.copy(Path.of(example("Valid.java")), file);
         var result = verify(file.toString());
         assertTrue(result.success(), result.toString());
         assertTrue(result.output().contains(file.toString()));
@@ -105,7 +105,7 @@ class LiquidJavaVerifierTest {
     @ParameterizedTest
     @ValueSource(strings = {"Valid.java", "Invalid.java", "Warning.java", "Malformed.java", "joint"})
     void matchesDirectCliOutputExceptColors(String name) {
-        String path = fixture(name);
+        String path = example(name);
         var bytes = new ByteArrayOutputStream();
         PrintStream original = System.out;
         try (var capture = new PrintStream(bytes, true, StandardCharsets.UTF_8)) {
@@ -129,7 +129,7 @@ class LiquidJavaVerifierTest {
             for (String name : List.of("Valid.java", "duplicate")) {
                 args.help = args.version = args.debugMode = args.lspMode = true;
                 args.paths = List.of("original.java");
-                var result = verify(fixture(name));
+                var result = verify(example(name));
                 if (name.equals("duplicate")) {
                     assertFalse(result.success());
                     assertNotNull(result.error(), result.toString());
@@ -143,19 +143,19 @@ class LiquidJavaVerifierTest {
                 }
                 assertSame(output, System.out);
                 assertFalse(args.help || args.version || args.debugMode || args.lspMode);
-                assertEquals(List.of(fixture(name)), args.paths);
+                assertEquals(List.of(example(name)), args.paths);
             }
         } finally {
             System.setErr(errorOutput);
         }
-        assertTrue(verify(fixture("Valid.java")).success());
+        assertTrue(verify(example("Valid.java")).success());
     }
 
     @Test
     void repeatedCallsDoNotLeakDiagnostics() {
         for (int i = 0; i < 3; i++) {
-            assertFalse(verify(fixture("Invalid.java")).success());
-            var result = verify(fixture("Valid.java"));
+            assertFalse(verify(example("Invalid.java")).success());
+            var result = verify(example("Valid.java"));
             assertTrue(result.success(), result.toString());
             assertFalse(result.output().contains("Refinement Error"));
             assertTrue(result.errors().isEmpty());
@@ -167,7 +167,7 @@ class LiquidJavaVerifierTest {
     void concurrentAdapterInstancesDoNotMixStateOrOutput() throws Exception {
         var jobs = new ArrayList<Callable<VerifyResult>>();
         for (int i = 0; i < 8; i++) {
-            String file = fixture(i % 2 == 0 ? "Valid.java" : "Invalid.java");
+            String file = example(i % 2 == 0 ? "Valid.java" : "Invalid.java");
             jobs.add(() -> new LiquidJavaVerifier().verify(new VerifyRequest(List.of(file), false)));
         }
         try (var pool = Executors.newFixedThreadPool(4)) {

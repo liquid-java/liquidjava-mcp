@@ -38,7 +38,6 @@ class CheckValidityToolTest {
         assertEquals("valid", call(query(Map.of("x", "int"), List.of("x > 0"), "x >= 0"), false).get("status"));
         var invalid = call(query(Map.of("x", "int"), List.of("x >= 0"), "x > 0"), false);
         assertEquals("invalid", invalid.get("status"));
-        assertEquals(true, invalid.get("success"));
         assertEquals(List.of(Map.of("variable", "x", "value", "0")), invalid.get("counterexample"));
         assertEquals("valid", call(query(Map.of(), List.of(), "true"), false).get("status"));
         assertEquals("invalid", call(query(Map.of(), List.of(), "false"), false).get("status"));
@@ -81,7 +80,7 @@ class CheckValidityToolTest {
                 liquidjava.mcp.validity.ValidityResult.failed("VERIFIER_ERROR", "solver unavailable"))) {
             var stub = new CheckValidityTool(request -> outcome, McpJsonDefaults.getMapper());
             var result = stub.call(query(Map.of(), List.of(), "true"));
-            assertEquals(!outcome.success(), result.isError());
+            assertEquals(outcome.error() != null, result.isError());
             assertTrue(McpJsonDefaults.getSchemaValidator().validate(
                     stub.specification().tool().outputSchema(), result.structuredContent()).valid());
         }
@@ -108,7 +107,7 @@ class CheckValidityToolTest {
         call(query(Map.of("onlyHere", "int"), List.of(), "onlyHere == onlyHere"), false);
         call(query(Map.of(), List.of(), "onlyHere == 0"), true);
         var verifier = new LiquidJavaVerifier();
-        var request = VerifyRequest.fromArguments(Map.of("paths", List.of("src/test/resources/fixtures/Valid.java")));
+        var request = VerifyRequest.fromArguments(Map.of("paths", List.of("src/test/resources/examples/Valid.java")));
         assertTrue(verifier.verify(request).success());
         call(query(Map.of(), List.of(), "onlyHere == 0"), true);
         call(query(Map.of("onlyHere", "boolean"), List.of(), "onlyHere || !onlyHere"), false);

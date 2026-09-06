@@ -8,6 +8,8 @@ import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.errors.*;
 import liquidjava.diagnostics.warnings.UnsatisfiableRefinementWarning;
 import liquidjava.mcp.utils.Utils;
+import liquidjava.rj_language.Predicate;
+import liquidjava.rj_language.opt.VCSimplificationResult;
 
 final class DiagnosticMapper {
     private DiagnosticMapper() {}
@@ -36,20 +38,24 @@ final class DiagnosticMapper {
 
     private static Map<String, String> getRefinements(LJDiagnostic diagnostic) {
         return switch (diagnostic) {
-            case RefinementError e -> Map.of(
-                "expected", e.getExpected().toString(),
-                "found", e.getFound().getImplication().toPredicate().toString()
-            );
-            case StateRefinementError e -> Map.of(
-                "expected", e.getExpected().toString(),
-                "found", e.getFound().toPredicate().toString()
-            );
+            case RefinementError e -> getRefinementPredicates(e.getExpected(), e.getFound());
+            case StateRefinementError e -> getRefinementPredicates(e.getExpected(), e.getFoundSimplification());
             case InvalidRefinementError e -> Map.of("refinement", e.getRefinement());
             case SyntaxError e -> Map.of("refinement", e.getRefinement());
             case StateConflictError e -> Map.of("state", e.getState());
             case UnsatisfiableRefinementWarning w -> Map.of("refinement", w.getRefinement());
             default -> Map.of();
         };
+    }
+
+    private static Map<String, String> getRefinementPredicates(Predicate expected, VCSimplificationResult found) {
+        VCSimplificationResult original = found;
+        while (original.getOrigin() != null) original = original.getOrigin();
+        return Map.of(
+            "expected", expected.toString(),
+            "found", original.getImplication().toPredicate().toString(),
+            "foundSimplified", found.getImplication().toPredicate().toString()
+        );
     }
 
     private static void put(Map<String, Object> result, String key, Object value) {

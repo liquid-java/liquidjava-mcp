@@ -24,7 +24,7 @@ class ContextToolsTest {
     private final ContextInspector inspector = new ContextInspector();
     private final GetLocalsTool locals = new GetLocalsTool(inspector, McpJsonDefaults.getMapper());
     private final GetGlobalsTool globals = new GetGlobalsTool(inspector, McpJsonDefaults.getMapper());
-    private static final String FILE = "src/test/resources/fixtures/Context.java";
+    private static final String FILE = "src/test/resources/examples/Context.java";
 
     private static Map<String, Object> globalArguments(String file) {
         return Map.of("path", file, "file", file);
@@ -52,24 +52,23 @@ class ContextToolsTest {
             assertTrue(((List<?>) content.get(key)).stream()
                     .allMatch(entry -> file.equals(((Map<?, ?>) entry).get("file"))));
         }
-        var empty = (Map<?, ?>) globals.call(globalArguments("src/test/resources/fixtures/Valid.java")).structuredContent();
+        var empty = (Map<?, ?>) globals.call(globalArguments("src/test/resources/examples/Valid.java")).structuredContent();
         for (String key : List.of("aliases", "ghosts", "states")) assertEquals(List.of(), empty.get(key));
         assertFalse(CommandLineLauncher.cmdArgs.lspMode);
-        assertTrue(verifier.verify(new VerifyRequest(List.of("src/test/resources/fixtures/Valid.java"), false)).success());
+        assertTrue(verifier.verify(new VerifyRequest(List.of("src/test/resources/examples/Valid.java"), false)).success());
         assertEquals(first.structuredContent(), globals.call(globalArguments(FILE)).structuredContent());
     }
 
     @Test
-    void verificationErrorsReturnStatusWithoutDiagnostics() {
-        for (String fixture : List.of("Invalid.java", "Warning.java")) {
-            String file = "src/test/resources/fixtures/" + fixture;
+    void verificationErrorsReturnContextWithoutDiagnostics() {
+        for (String example : List.of("Invalid.java", "Warning.java")) {
+            String file = "src/test/resources/examples/" + example;
             for (var response : List.of(
                     Map.entry(locals.call(Map.of("path", file, "file", file, "line", 6, "column", 5)), locals.specification().tool().outputSchema()),
                     Map.entry(globals.call(globalArguments(file)), globals.specification().tool().outputSchema()))) {
                 var result = response.getKey();
                 assertFalse(result.isError());
                 var content = (Map<?, ?>) result.structuredContent();
-                assertEquals(fixture.equals("Warning.java"), content.get("success"));
                 assertFalse(content.containsKey("errors"));
                 assertFalse(content.containsKey("warnings"));
                 assertTrue(McpJsonDefaults.getSchemaValidator().validate(response.getValue(), content).valid());
@@ -101,13 +100,13 @@ class ContextToolsTest {
                 Map.of("path", FILE, "file", FILE, "line", 2147483648L, "column", 1),
                 Map.of("path", FILE, "file", FILE, "line", "1", "column", 1),
                 Map.of("path", FILE, "file", "missing.java", "line", 1, "column", 1),
-                Map.of("path", FILE, "file", "src/test/resources/fixtures", "line", 1, "column", 1),
+                Map.of("path", FILE, "file", "src/test/resources/examples", "line", 1, "column", 1),
                 Map.of("path", FILE, "file", "a\u0000b", "line", 1, "column", 1));
     }
 
     @Test
     void globalsIncludeDefinitionsWithoutMethods() {
-        var result = globals.call(globalArguments("src/test/resources/fixtures/Definitions.java"));
+        var result = globals.call(globalArguments("src/test/resources/examples/Definitions.java"));
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
         assertEquals(1, ((List<?>) content.get("aliases")).size());
@@ -118,7 +117,7 @@ class ContextToolsTest {
 
     @Test
     void globalsUsePathForVerificationAndFileForFiltering() {
-        String path = "src/test/resources/fixtures/globals";
+        String path = "src/test/resources/examples/globals";
         String file = path + "/First.java";
         var result = globals.call(Map.of("path", path, "file", file));
         assertFalse(result.isError());
@@ -137,7 +136,7 @@ class ContextToolsTest {
 
     @Test
     void globalsWithoutFileReturnAllGhostsAndStates() {
-        String path = "src/test/resources/fixtures/globals";
+        String path = "src/test/resources/examples/globals";
         var result = globals.call(Map.of("path", path));
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
@@ -152,7 +151,7 @@ class ContextToolsTest {
 
     @Test
     void localsUsePathForVerificationAndFileForFiltering() {
-        String path = "src/test/resources/fixtures/globals";
+        String path = "src/test/resources/examples/globals";
         String file = path + "/First.java";
         var result = locals.call(Map.of("path", path, "file", file, "line", 10, "column", 26));
         assertFalse(result.isError());

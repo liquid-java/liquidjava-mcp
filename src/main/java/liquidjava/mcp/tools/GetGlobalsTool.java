@@ -53,7 +53,6 @@ public final class GetGlobalsTool {
 
     private CallToolResult toMcpResult(ContextResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
-        content.put("success", result.success());
         content.put("aliases", result.context().getOrDefault("aliases", List.of()));
         content.put("ghosts", result.context().getOrDefault("ghosts", List.of()));
         content.put("states", result.context().getOrDefault("states", List.of()));

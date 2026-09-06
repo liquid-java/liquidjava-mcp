@@ -23,9 +23,6 @@
   "outputSchema": {
     "type": "object",
     "properties": {
-      "success": {
-        "type": "boolean"
-      },
       "error": {
         "type": "object",
         "properties": {
@@ -155,7 +152,6 @@
       }
     },
     "required": [
-      "success",
       "aliases",
       "ghosts",
       "states"

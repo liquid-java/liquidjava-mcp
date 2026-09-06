@@ -158,6 +158,9 @@
               "found": {
                 "type": "string"
               },
+              "foundSimplified": {
+                "type": "string"
+              },
               "refinement": {
                 "type": "string"
               },

@@ -54,7 +54,7 @@ Allows agents to inspect verification conditions, their simplifications, and sol
 ```json
 {
   "success": false,
-  "output": "Running LiquidJava on: .../Example.java\n\nRefinement Error: value >= 0 && #ret⁰ == value is not a subtype of #ret⁰ > 0\n..."
+  "output": "Running LiquidJava on: .../Example.java\n\nRefinement Error: input >= 0 && #ret¹ == input is not a subtype of #ret¹ > 0\n..."
 }
 ```
 
@@ -78,30 +78,31 @@ Runs the LiquidJava verification and exposes diagnostics in a machine-readable f
   "errors": [
     {
       "refinements": {
-        "found": "value >= 0 && #ret_0 == value",
-        "expected": "#ret_0 > 0"
+        "found": "input >= 0 && #value_0 == input && #ret_1 == #value_0",
+        "foundSimplified": "input >= 0 && #ret_1 == input",
+        "expected": "#ret_1 > 0"
       },
       "type": "RefinementError",
       "severity": "error",
       "counterexample": [
-        {"variable": "value", "value": "0"},
-        {"variable": "#ret_0", "value": "0"}
+        {"variable": "input", "value": "0"},
+        {"variable": "#ret_1", "value": "0"}
       ],
       "declarationLocation": {
         "file": ".../Example.java",
         "startColumn": 9,
-        "endLine": 13,
+        "endLine": 14,
         "endColumn": 5,
         "startLine": 11
       },
       "location": {
         "file": ".../Example.java",
         "startColumn": 9,
-        "endLine": 12,
+        "endLine": 13,
         "endColumn": 21,
-        "startLine": 12
+        "startLine": 13
       },
-      "message": "value >= 0 && #ret⁰ == value is not a subtype of #ret⁰ > 0"
+      "message": "input >= 0 && #ret¹ == input is not a subtype of #ret¹ > 0"
     }
   ],
   "warnings": []
@@ -120,8 +121,8 @@ Exposes the verification context available at a specific point in the program.
 {
   "path": ".../Example.java",
   "file": ".../Example.java",
-  "line": 12,
-  "column": 16
+  "line": 13,
+  "column": 20
 }
 ```
 
@@ -129,8 +130,8 @@ Exposes the verification context available at a specific point in the program.
 {
   "variables": [
     {
-      "name": "value",
-      "internalName": "value",
+      "name": "input",
+      "internalName": "input",
       "location": {
         "file": ".../Example.java",
         "startColumn": 41,
@@ -139,20 +140,46 @@ Exposes the verification context available at a specific point in the program.
         "startLine": 11
       },
       "type": "int",
-      "refinement": "value >= 0"
+      "refinement": "input >= 0"
     },
     {
-      "name": "ret",
-      "internalName": "#ret_0",
+      "name": "value",
+      "internalName": "#value_0",
       "location": {
         "file": ".../Example.java",
-        "startColumn": 9,
+        "startColumn": 13,
         "endLine": 12,
-        "endColumn": 21,
+        "endColumn": 26,
         "startLine": 12
       },
       "type": "int",
-      "refinement": "#ret_0 == value"
+      "refinement": "#value_0 == input"
+    },
+    {
+      "name": "value",
+      "internalName": "value",
+      "location": {
+        "file": ".../Example.java",
+        "startColumn": 13,
+        "endLine": 12,
+        "endColumn": 26,
+        "startLine": 12
+      },
+      "type": "int",
+      "refinement": "true"
+    },
+    {
+      "name": "ret",
+      "internalName": "#ret_1",
+      "location": {
+        "file": ".../Example.java",
+        "startColumn": 9,
+        "endLine": 13,
+        "endColumn": 21,
+        "startLine": 13
+      },
+      "type": "int",
+      "refinement": "#ret_1 == #value_0"
     },
     {
       "name": "this#Example",
@@ -160,9 +187,9 @@ Exposes the verification context available at a specific point in the program.
       "location": {
         "file": ".../Example.java",
         "startColumn": 9,
-        "endLine": 12,
+        "endLine": 13,
         "endColumn": 21,
-        "startLine": 12
+        "startLine": 13
       },
       "type": "com.example.Example",
       "refinement": "true"

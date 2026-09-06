@@ -17,9 +17,9 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 class GetDiagnosticsToolTest {
     private final GetDiagnosticsTool tool = new GetDiagnosticsTool(new LiquidJavaVerifier(), McpJsonDefaults.getMapper());
 
-    private Map<?, ?> call(String... fixtures) throws Exception {
-        var paths = java.util.Arrays.stream(fixtures)
-                .map(name -> Path.of("src/test/resources/fixtures", name).toString()).toList();
+    private Map<?, ?> call(String... examples) throws Exception {
+        var paths = java.util.Arrays.stream(examples)
+                .map(name -> Path.of("src/test/resources/examples", name).toString()).toList();
         var result = tool.call(Map.of("paths", paths));
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
@@ -46,6 +46,7 @@ class GetDiagnosticsToolTest {
         assertEquals(5, location.get("startLine"));
         assertTrue(((Map<?, ?>) diagnostic.get("refinements")).get("expected").toString().contains("> 0"));
         assertNotNull(((Map<?, ?>) diagnostic.get("refinements")).get("found"));
+        assertNotNull(((Map<?, ?>) diagnostic.get("refinements")).get("foundSimplified"));
         assertEquals(Map.of("success", true, "errors", List.of(), "warnings", List.of()), call("Valid.java"));
     }
 

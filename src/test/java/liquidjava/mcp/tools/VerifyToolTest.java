@@ -40,9 +40,9 @@ class VerifyToolTest {
     void returnsDebugOutputWhenRequestedAndDefaultsToQuietOutput() {
         var tool = new VerifyTool(new liquidjava.mcp.verification.LiquidJavaVerifier(), McpJsonDefaults.getMapper());
         for (var arguments : List.of(
-                Map.<String, Object>of("paths", List.of("src/test/resources/fixtures/Valid.java"), "debug", true),
-                Map.<String, Object>of("paths", List.of("src/test/resources/fixtures/Valid.java")),
-                Map.<String, Object>of("paths", List.of("src/test/resources/fixtures/Valid.java"), "debug", false))) {
+                Map.<String, Object>of("paths", List.of("src/test/resources/examples/Valid.java"), "debug", true),
+                Map.<String, Object>of("paths", List.of("src/test/resources/examples/Valid.java")),
+                Map.<String, Object>of("paths", List.of("src/test/resources/examples/Valid.java"), "debug", false))) {
             var result = tool.call(arguments);
             assertFalse(result.isError(), result.toString());
             var content = (Map<?, ?>) result.structuredContent();

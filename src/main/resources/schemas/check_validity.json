@@ -56,9 +56,6 @@
   "outputSchema": {
     "type": "object",
     "properties": {
-      "success": {
-        "type": "boolean"
-      },
       "status": {
         "enum": [
           "valid",
@@ -110,16 +107,10 @@
         "additionalProperties": false
       }
     },
-    "required": [
-      "success"
-    ],
     "additionalProperties": false,
     "oneOf": [
       {
         "properties": {
-          "success": {
-            "const": true
-          },
           "status": {
             "const": "valid"
           }
@@ -149,9 +140,6 @@
       },
       {
         "properties": {
-          "success": {
-            "const": true
-          },
           "status": {
             "const": "invalid"
           }
@@ -177,9 +165,6 @@
       },
       {
         "properties": {
-          "success": {
-            "const": true
-          },
           "status": {
             "const": "unknown"
           }
@@ -204,11 +189,6 @@
         }
       },
       {
-        "properties": {
-          "success": {
-            "const": false
-          }
-        },
         "required": [
           "error"
         ],

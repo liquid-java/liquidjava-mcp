@@ -112,7 +112,7 @@ class McpServerTest {
 
     @Test
     void returnsContextOverStdio() throws Exception {
-        String file = Path.of("src/test/resources/fixtures/Context.java").toAbsolutePath().toString();
+        String file = Path.of("src/test/resources/examples/Context.java").toAbsolutePath().toString();
         for (String name : List.of("get_locals", "get_globals")) {
             var tool = client.listTools().tools().stream()
                     .filter(t -> t.name().equals(name)).findFirst().orElseThrow();
@@ -154,7 +154,6 @@ class McpServerTest {
         var result = client.callTool(new CallToolRequest("check_validity", arguments));
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
-        assertEquals(true, content.get("success"));
         assertEquals("invalid", content.get("status"));
         assertEquals(List.of(Map.of("variable", "x", "value", "0")), content.get("counterexample"));
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
@@ -166,8 +165,8 @@ class McpServerTest {
         assertEquals(true, ((Map<?, ?>) client.callTool(verifyRequest("Valid.java")).structuredContent()).get("success"));
     }
 
-    private static CallToolRequest verifyRequest(String fixture) {
-        String path = Path.of("src/test/resources/fixtures", fixture).toAbsolutePath().toString();
+    private static CallToolRequest verifyRequest(String example) {
+        String path = Path.of("src/test/resources/examples", example).toAbsolutePath().toString();
         return new CallToolRequest("verify", Map.of("paths", List.of(path)));
     }
 }

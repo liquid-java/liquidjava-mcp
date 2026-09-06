@@ -54,7 +54,6 @@ public final class GetLocalsTool {
 
     private CallToolResult toMcpResult(ContextResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
-        content.put("success", result.success());
         content.put("variables", result.context().getOrDefault("variables", List.of()));
         if (result.error() != null)
             content.put("error", Map.of("code", result.error().code().name(), "message", result.error().message()));

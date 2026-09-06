@@ -3,7 +3,6 @@ package liquidjava.mcp.context;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import liquidjava.diagnostics.Diagnostics;
 import liquidjava.mcp.runtime.LiquidJavaRunner;
 
 public final class ContextInspector {
@@ -22,7 +21,7 @@ public final class ContextInspector {
             List.of(path),
             true, 
             false,
-            output -> ContextResult.completed(!Diagnostics.getInstance().foundError(), snapshot.get()),
+            output -> ContextResult.completed(snapshot.get()),
             (message, output) -> ContextResult.failed(ContextResult.ErrorCode.VERIFIER_ERROR, message)
         );
     }

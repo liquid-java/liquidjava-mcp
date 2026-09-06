@@ -27,14 +27,14 @@ class ContextInspectorTest {
     @Test
     void concurrentContextAndVerificationCallsKeepSeparateSnapshots() throws Exception {
         var jobs = new ArrayList<Callable<Void>>();
-        var request = new ContextRequest("src/test/resources/fixtures/Context.java",
-                "src/test/resources/fixtures/Context.java", 12, 9);
-        var globalsRequest = new ContextRequest("src/test/resources/fixtures/Context.java",
-                "src/test/resources/fixtures/Context.java", null, null);
+        var request = new ContextRequest("src/test/resources/examples/Context.java",
+                "src/test/resources/examples/Context.java", 12, 9);
+        var globalsRequest = new ContextRequest("src/test/resources/examples/Context.java",
+                "src/test/resources/examples/Context.java", null, null);
         for (int i = 0; i < 4; i++) {
             jobs.add(() -> {
                 var result = new ContextInspector().getLocals(request);
-                assertTrue(result.success(), result.toString());
+                assertNull(result.error(), result.toString());
                 var variables = (List<?>) result.context().get("variables");
                 assertTrue(variables.stream().anyMatch(v -> ((Map<?, ?>) v).get("name").equals("input")));
                 assertFalse(variables.stream().anyMatch(v -> ((Map<?, ?>) v).get("name").equals("nested")));
@@ -42,12 +42,12 @@ class ContextInspectorTest {
             });
             jobs.add(() -> {
                 var result = new ContextInspector().getGlobals(globalsRequest);
-                assertTrue(result.success(), result.toString());
+                assertNull(result.error(), result.toString());
                 assertEquals(2, ((List<?>) result.context().get("states")).size());
                 return null;
             });
             jobs.add(() -> {
-                var result = new LiquidJavaVerifier().verify(new VerifyRequest(List.of("src/test/resources/fixtures/Invalid.java"), false));
+                var result = new LiquidJavaVerifier().verify(new VerifyRequest(List.of("src/test/resources/examples/Invalid.java"), false));
                 assertFalse(result.success());
                 assertNull(result.error());
                 assertFalse(result.errors().isEmpty());
@@ -66,17 +66,17 @@ class ContextInspectorTest {
         Path broken = temporary.resolve("Duplicate.java");
         Files.writeString(broken, "class Duplicate {} class Duplicate {}");
         var inspector = new ContextInspector();
-        var valid = new ContextRequest("src/test/resources/fixtures/Context.java",
-                "src/test/resources/fixtures/Context.java", null, null);
+        var valid = new ContextRequest("src/test/resources/examples/Context.java",
+                "src/test/resources/examples/Context.java", null, null);
         var before = inspector.getGlobals(valid);
-        assertTrue(before.success());
+        assertNull(before.error());
         String snapshot = before.toString();
         PrintStream originalOut = System.out;
         PrintStream originalErr = System.err;
         try (var capture = new PrintStream(new ByteArrayOutputStream())) {
             System.setErr(capture);
             var result = inspector.getGlobals(new ContextRequest(broken.toString(), broken.toString(), null, null));
-            assertFalse(result.success());
+            assertNotNull(result.error());
             assertEquals(ContextResult.ErrorCode.VERIFIER_ERROR, result.error().code());
             assertTrue(result.context().isEmpty());
         } finally {

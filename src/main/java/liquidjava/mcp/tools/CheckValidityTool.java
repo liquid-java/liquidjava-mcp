@@ -58,7 +58,6 @@ public final class CheckValidityTool {
 
     private CallToolResult toMcpResult(ValidityResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
-        content.put("success", result.success());
         if (result.status() != null) content.put("status", result.status());
         if (result.counterexample() != null) content.put("counterexample", result.counterexample());
         if (result.reason() != null) content.put("reason", result.reason());
