@@ -22,7 +22,7 @@ public final class GetDiagnosticsTool {
     private final String description = """
         Runs LiquidJava and returns diagnostics in a structured, machine-readable format instead of plain-text terminal output.
         Prefer it over `verify` when you need to programmatically inspect, filter, or reason over individual errors or warnings.
-        Receives one or more paths to verify and returns a `errors` and a `warnings` arrays, each containing structured diagnostics with type, severity, location, message, refinements, hints, and counterexamples when available.
+        Receives a file or directory path to verify and returns a `errors` and a `warnings` arrays, each containing structured diagnostics with type, severity, location, message, refinements, hints, and counterexamples when available.
         Locations use one-based lines and columns with inclusive ends.
     """;
 
@@ -47,8 +47,8 @@ public final class GetDiagnosticsTool {
     public CallToolResult call(Map<String, Object> arguments) {
         VerifyRequest request;
         try {
-            if (arguments == null || !arguments.keySet().equals(java.util.Set.of("paths")))
-                throw new IllegalArgumentException("expected exactly one argument: paths");
+            if (arguments == null || !arguments.keySet().equals(java.util.Set.of("path")))
+                throw new IllegalArgumentException("expected exactly one argument: path");
             request = VerifyRequest.fromArguments(arguments);
         } catch (IllegalArgumentException e) {
             return toMcpResult(VerifyResult.failed(VerifyResult.ErrorCode.INVALID_INPUT, e.getMessage(), ""));

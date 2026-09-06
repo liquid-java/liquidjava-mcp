@@ -56,8 +56,8 @@ class McpServerTest {
 
     @Test
     void returnsDebugOutputOverStdioWithoutLeakingIntoTheNextCall() throws Exception {
-        var paths = verifyRequest("Invalid.java").arguments().get("paths");
-        var result = client.callTool(new CallToolRequest("verify", Map.of("paths", paths, "debug", true)));
+        var path = verifyRequest("Invalid.java").arguments().get("path");
+        var result = client.callTool(new CallToolRequest("verify", Map.of("path", path, "debug", true)));
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
         assertEquals(false, content.get("success"));
@@ -167,6 +167,6 @@ class McpServerTest {
 
     private static CallToolRequest verifyRequest(String example) {
         String path = Path.of("src/test/resources/examples", example).toAbsolutePath().toString();
-        return new CallToolRequest("verify", Map.of("paths", List.of(path)));
+        return new CallToolRequest("verify", Map.of("path", path));
     }
 }

@@ -29,8 +29,8 @@ class LiquidJavaVerifierTest {
         return Path.of("src", "test", "resources", "examples", name).toString();
     }
 
-    private VerifyResult verify(String... paths) {
-        return verifier.verify(new VerifyRequest(List.of(paths), false));
+    private VerifyResult verify(String path) {
+        return verifier.verify(new VerifyRequest(path, false));
     }
 
     @Test
@@ -62,22 +62,18 @@ class LiquidJavaVerifierTest {
     }
 
     @Test
-    void verifiesDirectoriesAndCooperatingFilesTogether() {
-        var folder = verify(example("joint"));
-        var files = verify(example("joint/Contract.java"), example("joint/Caller.java"));
-        assertFalse(folder.success(), folder.toString());
-        assertFalse(files.success(), files.toString());
-        assertNull(folder.error());
-        assertNull(files.error());
-        assertTrue(files.output().contains("Refinement Error"), files.output());
-        assertTrue(files.output().contains("Caller.java"));
-        assertEquals(folder.output().substring(folder.output().indexOf('\n')), files.output().substring(files.output().indexOf('\n')));
+    void verifiesCooperatingFilesInADirectory() {
+        var result = verify(example("joint"));
+        assertFalse(result.success(), result.toString());
+        assertNull(result.error());
+        assertTrue(result.output().contains("Refinement Error"), result.output());
+        assertTrue(result.output().contains("Caller.java"));
     }
 
     @Test
     void missingPathUsesLiquidJavaDiagnostic() {
         String missing = temporary.resolve("missing.java").toString();
-        var result = verify(example("Valid.java"), missing);
+        var result = verify(missing);
         assertFalse(result.success());
         assertNull(result.error());
         assertTrue(result.output().contains("The path " + missing + " was not found"));
@@ -168,7 +164,7 @@ class LiquidJavaVerifierTest {
         var jobs = new ArrayList<Callable<VerifyResult>>();
         for (int i = 0; i < 8; i++) {
             String file = example(i % 2 == 0 ? "Valid.java" : "Invalid.java");
-            jobs.add(() -> new LiquidJavaVerifier().verify(new VerifyRequest(List.of(file), false)));
+            jobs.add(() -> new LiquidJavaVerifier().verify(new VerifyRequest(file, false)));
         }
         try (var pool = Executors.newFixedThreadPool(4)) {
             var results = pool.invokeAll(jobs);
@@ -185,12 +181,9 @@ class LiquidJavaVerifierTest {
     }
 
     @Test
-    void requestMakesADefensiveCopyAndRejectsInvalidPaths() {
-        var paths = new ArrayList<>(List.of("one.java"));
-        var request = new VerifyRequest(paths, false);
-        paths.add("two.java");
-        assertEquals(List.of("one.java"), request.paths());
-        assertThrows(UnsupportedOperationException.class, () -> request.paths().add("three.java"));
-        assertThrows(IllegalArgumentException.class, () -> new VerifyRequest(List.of("a\u0000b"), false));
+    void requestRejectsInvalidPaths() {
+        assertThrows(IllegalArgumentException.class, () -> new VerifyRequest(null, false));
+        assertThrows(IllegalArgumentException.class, () -> new VerifyRequest(" ", false));
+        assertThrows(IllegalArgumentException.class, () -> new VerifyRequest("a\u0000b", false));
     }
 }

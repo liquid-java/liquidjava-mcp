@@ -29,8 +29,8 @@ Build the project with `mvn package` and then point your MCP client at the resul
 
 | Tool | Purpose | Input | Output |
 |---|---|---|---|
-| `verify` | Run the verification, get human-readable output (same as CLI) | file/folder path(s), optional `debug` | standard LiquidJava output |
-| `get_diagnostics` | Run verification, get structured/machine-readable diagnostics | file/folder path(s) | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
+| `verify` | Run the verification, get human-readable output (same as CLI) | file/directory path, optional `debug` | standard LiquidJava output |
+| `get_diagnostics` | Run verification, get structured/machine-readable diagnostics | file/directory path | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
 | `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, optional `file` | `aliases`, `ghosts`, `states` |
 | `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`/`invalid`/`unknown`), `counterexample` or `reason` |
@@ -40,13 +40,13 @@ Build the project with `mvn package` and then point your MCP client at the resul
 Runs the LiquidJava verification and returns the same representation normally shown to developers.
 Allows agents to inspect verification conditions, their simplifications, and solver results using the `debug` flag.
 
-**Input:** One or more file or folder paths, with optional `debug` flag.
+**Input:** File or directory path, with optional `debug` flag.
 
 **Output:** Verification status and the standard LiquidJava verification output.
 
 ```json
 {
-  "paths": [".../Example.java"],
+  "path": ".../Example.java",
   "debug": false
 }
 ```
@@ -62,13 +62,13 @@ Allows agents to inspect verification conditions, their simplifications, and sol
 
 Runs the LiquidJava verification and exposes diagnostics in a machine-readable format, avoiding the need for agents to parse terminal output.
 
-**Input:** One or more file or folder paths.
+**Input:** File or directory path.
 
 **Output:** Verification status and `errors` and `warnings` arrays of structured diagnostics, including type, severity, location, message, refinements, hints, and counterexamples when available.
 
 ```json
 {
-  "paths": [".../Example.java"]
+  "path": ".../Example.java"
 }
 ```
 

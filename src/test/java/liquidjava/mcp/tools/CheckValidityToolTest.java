@@ -107,7 +107,7 @@ class CheckValidityToolTest {
         call(query(Map.of("onlyHere", "int"), List.of(), "onlyHere == onlyHere"), false);
         call(query(Map.of(), List.of(), "onlyHere == 0"), true);
         var verifier = new LiquidJavaVerifier();
-        var request = VerifyRequest.fromArguments(Map.of("paths", List.of("src/test/resources/examples/Valid.java")));
+        var request = VerifyRequest.fromArguments(Map.of("path", "src/test/resources/examples/Valid.java"));
         assertTrue(verifier.verify(request).success());
         call(query(Map.of(), List.of(), "onlyHere == 0"), true);
         call(query(Map.of("onlyHere", "boolean"), List.of(), "onlyHere || !onlyHere"), false);

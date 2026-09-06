@@ -6,6 +6,7 @@ import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.TypeRef;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import liquidjava.mcp.verification.LiquidJavaVerifier;
@@ -17,10 +18,11 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 class GetDiagnosticsToolTest {
     private final GetDiagnosticsTool tool = new GetDiagnosticsTool(new LiquidJavaVerifier(), McpJsonDefaults.getMapper());
 
-    private Map<?, ?> call(String... examples) throws Exception {
-        var paths = java.util.Arrays.stream(examples)
-                .map(name -> Path.of("src/test/resources/examples", name).toString()).toList();
-        var result = tool.call(Map.of("paths", paths));
+    @org.junit.jupiter.api.io.TempDir Path temporary;
+
+    private Map<?, ?> call(String example) throws Exception {
+        String path = Path.of("src/test/resources/examples").resolve(example).toString();
+        var result = tool.call(Map.of("path", path));
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.specification().tool().outputSchema(), content).valid(), content.toString());
@@ -69,7 +71,9 @@ class GetDiagnosticsToolTest {
 
     @Test
     void separatesErrorsAndWarningsFromTheSameRun() throws Exception {
-        var content = call("Invalid.java", "Warning.java");
+        for (String name : List.of("Invalid.java", "Warning.java"))
+            Files.copy(Path.of("src/test/resources/examples", name), temporary.resolve(name));
+        var content = call(temporary.toString());
         assertEquals(false, content.get("success"));
         var errors = (List<?>) content.get("errors");
         var warnings = (List<?>) content.get("warnings");
@@ -80,8 +84,11 @@ class GetDiagnosticsToolTest {
     }
 
     @Test
-    void verifiesFoldersAndMultiplePathsTogether() throws Exception {
-        assertEquals(call("joint"), call("joint/Contract.java", "joint/Caller.java"));
+    void verifiesCooperatingFilesInAFolder() throws Exception {
+        var content = call("joint");
+        assertEquals(false, content.get("success"));
+        assertTrue(((List<?>) content.get("errors")).stream().anyMatch(value ->
+                ((Map<?, ?>) ((Map<?, ?>) value).get("location")).get("file").toString().endsWith("Caller.java")));
     }
 
     @Test
@@ -103,7 +110,7 @@ class GetDiagnosticsToolTest {
         var failing = new GetDiagnosticsTool(request -> liquidjava.mcp.verification.VerifyResult.failed(
                 liquidjava.mcp.verification.VerifyResult.ErrorCode.VERIFIER_ERROR, "failed", "partial output"),
                 McpJsonDefaults.getMapper());
-        var result = failing.call(Map.of("paths", List.of("Example.java")));
+        var result = failing.call(Map.of("path", "Example.java"));
         assertTrue(result.isError());
         assertEquals(Map.of("success", false, "errors", List.of(), "warnings", List.of(),
                 "error", Map.of("code", "VERIFIER_ERROR", "message", "failed")), result.structuredContent());
@@ -114,10 +121,10 @@ class GetDiagnosticsToolTest {
     @Test
     void rejectsInvalidInputBeforeRunningVerifier() {
         var rejecting = new GetDiagnosticsTool(request -> fail("must not run"), McpJsonDefaults.getMapper());
-        for (var arguments : List.of(Map.<String, Object>of(), Map.<String, Object>of("paths", List.of()),
-                Map.<String, Object>of("paths", List.of(" ")), Map.<String, Object>of("paths", List.of(1)),
-                Map.<String, Object>of("paths", List.of("a.java"), "debug", true),
-                Map.<String, Object>of("paths", List.of("a.java"), "extra", true))) {
+        for (var arguments : List.of(Map.<String, Object>of(), Map.<String, Object>of("path", List.of()),
+                Map.<String, Object>of("path", " "), Map.<String, Object>of("path", 1),
+                Map.<String, Object>of("path", "a.java", "debug", true),
+                Map.<String, Object>of("path", "a.java", "extra", true))) {
             var result = rejecting.call(arguments);
             assertTrue(result.isError());
             var content = (Map<?, ?>) result.structuredContent();

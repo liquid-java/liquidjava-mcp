@@ -1,6 +1,5 @@
 package liquidjava.mcp.context;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import liquidjava.mcp.runtime.LiquidJavaRunner;
@@ -18,7 +17,7 @@ public final class ContextInspector {
 
     private ContextResult inspect(String path, Supplier<Map<String, Object>> snapshot) {
         return LiquidJavaRunner.run(
-            List.of(path),
+            path,
             true, 
             false,
             output -> ContextResult.completed(snapshot.get()),

@@ -3,7 +3,6 @@ package liquidjava.mcp.runtime;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import liquidjava.api.CommandLineArgs;
@@ -20,7 +19,7 @@ public final class LiquidJavaRunner {
      * Runs LiquidJava in a separate thread, capturing its output and returning a result based on the provided snapshot and failure functions.
      */
     public static <T> T run(
-        List<String> paths,
+        String path,
         boolean captureContext,
         boolean debug,
         Function<String, T> snapshot,
@@ -38,12 +37,7 @@ public final class LiquidJavaRunner {
                 args.debugMode = debug;
                 args.lspMode = captureContext;
                 args.paths = null;
-                String[] arguments = new String[paths.size() + 1];
-                arguments[0] = "--";
-                for (int i = 0; i < paths.size(); i++) {
-                    arguments[i + 1] = paths.get(i);
-                }
-                CommandLineLauncher.main(arguments);
+                CommandLineLauncher.main(new String[] {"--", path});
                 return snapshot.apply(Utils.getPlainOutput(bytes));
             } catch (Exception | LinkageError e) {
                 e.printStackTrace(System.err);
