@@ -78,9 +78,12 @@ Runs the LiquidJava verification and exposes diagnostics in a machine-readable f
   "errors": [
     {
       "refinements": {
-        "found": "input >= 0 && #value_0 == input && #ret_1 == #value_0",
-        "foundSimplified": "input >= 0 && #ret_1 == input",
-        "expected": "#ret_1 > 0"
+        "expected": "#ret_1 > 0",
+        "found": "input >= 0 && #ret_1 == input"
+      },
+      "vc": {
+        "simplified": "∀input:int, input >= 0 => \n∀#ret_1:int, #ret_1 == input => \n#ret_1 > 0",
+        "original": "∀input:int, input >= 0 => \n∀#value_0:int, #value_0 == input => \n∀#ret_1:int, #ret_1 == #value_0 => \n#ret_1 > 0"
       },
       "type": "RefinementError",
       "severity": "error",

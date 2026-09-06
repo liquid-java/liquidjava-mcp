@@ -46,7 +46,9 @@ class GetDiagnosticsToolTest {
         assertEquals(5, location.get("startLine"));
         assertTrue(((Map<?, ?>) diagnostic.get("refinements")).get("expected").toString().contains("> 0"));
         assertNotNull(((Map<?, ?>) diagnostic.get("refinements")).get("found"));
-        assertNotNull(((Map<?, ?>) diagnostic.get("refinements")).get("foundSimplified"));
+        var vc = (Map<?, ?>) diagnostic.get("vc");
+        assertNotNull(vc.get("simplified"));
+        assertNotNull(vc.get("original"));
         assertEquals(Map.of("success", true, "errors", List.of(), "warnings", List.of()), call("Valid.java"));
     }
 

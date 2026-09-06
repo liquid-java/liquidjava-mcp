@@ -158,9 +158,6 @@
               "found": {
                 "type": "string"
               },
-              "foundSimplified": {
-                "type": "string"
-              },
               "refinement": {
                 "type": "string"
               },
@@ -168,6 +165,22 @@
                 "type": "string"
               }
             },
+            "additionalProperties": false
+          },
+          "vc": {
+            "type": "object",
+            "properties": {
+              "simplified": {
+                "type": "string"
+              },
+              "original": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "simplified",
+              "original"
+            ],
             "additionalProperties": false
           },
           "counterexample": {
