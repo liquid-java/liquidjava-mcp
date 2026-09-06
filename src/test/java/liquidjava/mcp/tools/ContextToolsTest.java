@@ -174,8 +174,16 @@ class ContextToolsTest {
         assertFalse(result.isError());
         assertTrue(((List<Map<?, ?>>) ((Map<?, ?>) result.structuredContent()).get("variables")).stream()
                 .anyMatch(variable -> variable.get("name").equals("local")));
-        assertEquals(Set.of("path", "file", "line", "column"),
+        assertEquals(Set.of("path", "line", "column"),
                 Set.copyOf((List<?>) locals.specification().tool().inputSchema().get("required")));
+    }
+
+    @Test
+    void localsUsePathWhenFileIsOmitted() {
+        var result = locals.call(Map.of("path", FILE, "line", 10, "column", 28));
+        assertFalse(result.isError(), result.toString());
+        assertTrue(((List<Map<?, ?>>) ((Map<?, ?>) result.structuredContent()).get("variables")).stream()
+                .anyMatch(variable -> variable.get("name").equals("nested")));
     }
 
     @Test

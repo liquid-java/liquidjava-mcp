@@ -12,7 +12,7 @@
         "type": "string",
         "minLength": 1,
         "pattern": "\\S",
-        "description": "Java source file in which to resolve the cursor position."
+        "description": "Optional Java source file in which to resolve the cursor position; defaults to path."
       },
       "line": {
         "type": "integer",
@@ -27,7 +27,6 @@
     },
     "required": [
       "path",
-      "file",
       "line",
       "column"
     ],

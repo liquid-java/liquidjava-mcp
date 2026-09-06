@@ -31,7 +31,7 @@ Build the project with `mvn package` and then point your MCP client at the resul
 |---|---|---|---|
 | `verify` | Run the verification, get human-readable output (same as CLI) | file/directory path, optional `debug` | standard LiquidJava output |
 | `get_diagnostics` | Run verification, get structured/machine-readable diagnostics | file/directory path | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
-| `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
+| `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, optional `file`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, optional `file` | `aliases`, `ghosts`, `states` |
 | `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`/`invalid`/`unknown`), `counterexample` or `reason` |
 
@@ -116,14 +116,13 @@ Runs the LiquidJava verification and exposes diagnostics in a machine-readable f
 
 Exposes the verification context available at a specific point in the program.
 
-**Input:** A `path` to the Java source file or directory to verify, plus a `file`, `line`, and `column` identifying the source position to inspect. Lines and columns are one-based.
+**Input:** A `path` to the Java source file or directory to verify, plus `line` and `column` identifying the source position to inspect. An optional `file` parameter specifies a different file for filtering variables. When omitted, `path` is used instead. Lines and columns are one-based.
 
 **Output:** `variables`. Each variable includes its source name, verifier `internalName`, Java type, refinement predicate, and source location (inclusive ends). Entries include declarations and refinement instances recorded before the position in enclosing scopes. Internal names preserve relationships between predicates. Positions outside recorded scopes return an empty array. This exposes source-filtered verifier history; synthesized branch-merge instances can carry the original declaration location, so it does not reconstruct the exact solver state at the cursor.
 
 ```json
 {
   "path": ".../Example.java",
-  "file": ".../Example.java",
   "line": 13,
   "column": 20
 }

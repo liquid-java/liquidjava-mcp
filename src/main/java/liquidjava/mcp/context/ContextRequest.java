@@ -46,16 +46,20 @@ public record ContextRequest(String path, String file, Integer line, Integer col
     }
 
     public static ContextRequest fromPositionArguments(Map<String, Object> arguments) {
-        if (arguments == null || !(arguments.get("path") instanceof String path)
-                || !(arguments.get("file") instanceof String file))
-            throw new IllegalArgumentException("expected path, file, line, and column");
+        if (arguments == null || !(arguments.get("path") instanceof String path))
+            throw new IllegalArgumentException("expected path, line, and column");
 
-        if (!arguments.keySet().equals(Set.of("path", "file", "line", "column")))
-            throw new IllegalArgumentException("expected path, file, line, and column");
+        if (!(arguments.keySet().equals(Set.of("path", "line", "column"))
+                || arguments.keySet().equals(Set.of("path", "file", "line", "column"))))
+            throw new IllegalArgumentException("expected path, line, and column, and optional file");
+
+        Object fileArgument = arguments.get("file");
+        if (arguments.containsKey("file") && !(fileArgument instanceof String))
+            throw new IllegalArgumentException("file must be a nonblank string");
 
         int line = coordinate(arguments.get("line"));
         int column = coordinate(arguments.get("column"));
-        return new ContextRequest(path, file, line, column);
+        return new ContextRequest(path, arguments.containsKey("file") ? (String) fileArgument : path, line, column);
     }
 
     private static int coordinate(Object value) {
