@@ -11,8 +11,10 @@ public record ContextRequest(String path, String file, Integer line, Integer col
     public ContextRequest {
         if (path == null || path.isBlank())
             throw new IllegalArgumentException("path must be a nonblank string");
+        Path verificationPath;
         try {
-            if (!Files.exists(Path.of(path)))
+            verificationPath = Path.of(path).toAbsolutePath().normalize();
+            if (!Files.exists(verificationPath))
                 throw new IllegalArgumentException("The path " + path + " was not found");
         } catch (InvalidPathException e) {
             throw new IllegalArgumentException("invalid path: " + e.getReason(), e);
@@ -22,8 +24,13 @@ public record ContextRequest(String path, String file, Integer line, Integer col
             if (file.isBlank())
                 throw new IllegalArgumentException("file must be a nonblank string");
             Path sourceFile = Path.of(file).toAbsolutePath().normalize();
-            if (!Files.isRegularFile(sourceFile) || !file.endsWith(".java"))
+            if (!Files.isRegularFile(sourceFile) || !sourceFile.getFileName().toString().endsWith(".java"))
                 throw new IllegalArgumentException("file must be an existing Java source file");
+            boolean belongsToPath = Files.isDirectory(verificationPath)
+                    ? sourceFile.startsWith(verificationPath)
+                    : sourceFile.equals(verificationPath);
+            if (!belongsToPath)
+                throw new IllegalArgumentException("file must be within path");
             file = sourceFile.toString();
         }
         if (line != null || column != null) {

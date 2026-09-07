@@ -14,6 +14,9 @@
               "true",
               "false",
               "int",
+              "short",
+              "char",
+              "long",
               "double",
               "float",
               "boolean"
