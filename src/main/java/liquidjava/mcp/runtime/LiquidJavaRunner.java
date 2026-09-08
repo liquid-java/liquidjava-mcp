@@ -26,16 +26,15 @@ public final class LiquidJavaRunner {
         1, Thread.ofPlatform().daemon().name("liquidjava-runner").factory());
     static {
         EXECUTOR.setRemoveOnCancelPolicy(true);
-    }
-    private static AnalysisKey cachedKey;
-    private static String cachedOutput;
+    };
+    private static CachedAnalysis cachedAnalysis;
+    private record CachedAnalysis(AnalysisKey key, String output) {}
 
     private LiquidJavaRunner() {}
 
     /**
-     * Runs LiquidJava in a separate thread, capturing its output and returning a result based on the provided snapshot and failure functions.
-     * Reuses the latest unchanged analysis and maps its state while holding the runner lock.
-     * Includes a timeout and serializes analysis and snapshots because LiquidJava uses global state.
+     * Runs analysis and snapshots on a single worker because LiquidJava uses global state.
+     * Reuses the latest unchanged analysis and captures output. The timeout includes queue time.
      */
     public static <T> T run(
         String path,
@@ -43,8 +42,7 @@ public final class LiquidJavaRunner {
         Function<String, T> snapshot,
         BiFunction<String, String, T> failure
     ) {
-        return run(path, debug, snapshot, failure, TIMEOUT,
-            () -> CommandLineLauncher.main(new String[] {"--", path}));
+        return run(path, debug, snapshot, failure, TIMEOUT, () -> CommandLineLauncher.main(new String[] {"--", path}));
     }
 
     static <T> T run(
@@ -57,62 +55,7 @@ public final class LiquidJavaRunner {
     ) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         AtomicBoolean cancelled = new AtomicBoolean();
-        Future<T> future = EXECUTOR.submit(() -> {
-            PrintStream previousOut = System.out;
-            try (PrintStream capturedOut = new PrintStream(bytes, true, StandardCharsets.UTF_8)) {
-                System.setOut(capturedOut);
-
-                // command line arguments
-                CommandLineArgs args = CommandLineLauncher.cmdArgs;
-                args.help = false;
-                args.version = false;
-                args.debugMode = debug;
-                args.lspMode = true;
-                args.paths = List.of(path);
-
-                // reuse cached result if the analysis key matches
-                AnalysisKey key = readKey(path, debug);
-                if (cancelled.get()) return null;
-                if (key != null && key.equals(cachedKey))
-                    return snapshot.apply(cachedOutput);
-
-                // clear cached result and reinitialize context for a new analysis
-                cachedKey = null;
-                cachedOutput = null;
-                Context.getInstance().reinitializeAllContext();
-
-                if (key != null && key.sources().isEmpty())
-                    return failure.apply("Analysis incomplete: No Java source files found in " + path, "");
-
-                // run LiquidJava on the specified path
-                analysis.run();
-                if (cancelled.get()) return null;
-                String output = Utils.stripAnsi(bytes);
-                String compilationWarning = "Java compilation encountered issues. Verification may be affected.";
-                if (Diagnostics.getInstance().getWarnings().stream()
-                        .anyMatch(warning -> warning.getMessage().equals(compilationWarning)))
-                    return failure.apply("Analysis incomplete: " + compilationWarning + "\n" + output, output);
-                T result = snapshot.apply(output);
-
-                // update cached result if the analysis key matches
-                if (!cancelled.get() && key != null && key.equals(readKey(path, debug))) {
-                    cachedKey = key;
-                    cachedOutput = output;
-                }
-                return result;
-            } catch (Exception | LinkageError e) {
-                cachedKey = null;
-                cachedOutput = null;
-                if (cancelled.get()) return null;
-                e.printStackTrace(System.err);
-                String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                return failure.apply(message, Utils.stripAnsi(bytes));
-            } finally {
-                CommandLineLauncher.cmdArgs.lspMode = false;
-                CommandLineLauncher.cmdArgs.debugMode = false;
-                System.setOut(previousOut);
-            }
-        });
+        Future<T> future = EXECUTOR.submit(() -> execute(path, debug, snapshot, failure, analysis, bytes, cancelled));
         try {
             return future.get(timeout.toNanos(), TimeUnit.NANOSECONDS);
         } catch (TimeoutException | InterruptedException e) {
@@ -129,6 +72,67 @@ public final class LiquidJavaRunner {
             if (cause instanceof RuntimeException error) throw error;
             throw new IllegalStateException(cause);
         }
+    }
+
+    private static <T> T execute(
+        String path,
+        boolean debug,
+        Function<String, T> snapshot,
+        BiFunction<String, String, T> failure,
+        Runnable analysis,
+        ByteArrayOutputStream bytes,
+        AtomicBoolean cancelled
+    ) {
+        PrintStream previousOut = System.out;
+        try (PrintStream capturedOut = new PrintStream(bytes, true, StandardCharsets.UTF_8)) {
+            System.setOut(capturedOut);
+
+            configureArguments(path, debug);
+
+            AnalysisKey key = readKey(path, debug);
+            if (cancelled.get()) return null;
+            if (key != null && cachedAnalysis != null && key.equals(cachedAnalysis.key()))
+                return snapshot.apply(cachedAnalysis.output());
+
+            cachedAnalysis = null;
+            Context.getInstance().reinitializeAllContext();
+
+            if (key != null && key.sources().isEmpty())
+                return failure.apply("Analysis incomplete: No Java source files found in " + path, "");
+
+            analysis.run();
+            if (cancelled.get()) return null;
+            String output = Utils.stripAnsi(bytes);
+            if (Diagnostics.getInstance().getWarnings().stream()
+                    .anyMatch(warning -> warning.getMessage().equals("Java compilation encountered issues. Verification may be affected.")))
+                return failure.apply("Analysis incomplete: " + output, output);
+            T result = snapshot.apply(output);
+
+            // only cache analyses whose sources stayed unchanged throughout execution
+            if (!cancelled.get() && key != null && key.equals(readKey(path, debug))) {
+                cachedAnalysis = new CachedAnalysis(key, output);
+            }
+            return result;
+        } catch (Exception | LinkageError e) {
+            cachedAnalysis = null;
+            if (cancelled.get()) return null;
+            e.printStackTrace(System.err);
+            String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            return failure.apply(message, Utils.stripAnsi(bytes));
+        } finally {
+            CommandLineLauncher.cmdArgs.lspMode = false;
+            CommandLineLauncher.cmdArgs.debugMode = false;
+            System.setOut(previousOut);
+        }
+    }
+
+    private static void configureArguments(String path, boolean debug) {
+        CommandLineArgs args = CommandLineLauncher.cmdArgs;
+        args.help = false;
+        args.version = false;
+        args.debugMode = debug;
+        args.lspMode = true;
+        args.paths = List.of(path);
     }
 
     private static AnalysisKey readKey(String path, boolean debug) {

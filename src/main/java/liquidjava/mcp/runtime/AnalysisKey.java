@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Stream;
@@ -18,30 +19,38 @@ public record AnalysisKey(Path path, boolean debug, List<Source> sources) {
 
     public static AnalysisKey read(String input, boolean debug) throws IOException {
         Path path = Utils.canonicalPath(input);
-        List<Path> files;
-        if (Files.isDirectory(path)) {
-            try (Stream<Path> paths = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
-                files = paths.filter(Files::isRegularFile)
-                    .filter(file -> file.toString().endsWith(".java"))
-                    .sorted().toList();
-            } catch (UncheckedIOException e) {
-                throw e.getCause();
-            }
-        } else {
-            files = List.of(path);
+        List<Path> files = sourceFiles(path);
+        List<Source> sources = new ArrayList<>();
+        for (Path file : files) {
+            sources.add(new Source(file, hash(file)));
         }
+        return new AnalysisKey(path, debug, List.copyOf(sources));
+    }
+
+    private static List<Path> sourceFiles(Path path) throws IOException {
+        if (!Files.isDirectory(path)) return List.of(path);
+        try (Stream<Path> paths = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
+            return paths.filter(Files::isRegularFile)
+                .filter(file -> file.toString().endsWith(".java"))
+                .sorted().toList();
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
+    }
+
+    private static String hash(Path file) throws IOException {
+        MessageDigest digest = sha256();
+        try (InputStream stream = Files.newInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = stream.read(buffer)) != -1) digest.update(buffer, 0, count);
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
+    private static MessageDigest sha256() {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            List<Source> sources = new java.util.ArrayList<Source>();
-            for (Path file : files) {
-                try (InputStream stream = Files.newInputStream(file)) {
-                    byte[] buffer = new byte[8192];
-                    int count;
-                    while ((count = stream.read(buffer)) != -1) digest.update(buffer, 0, count);
-                }
-                sources.add(new Source(file, HexFormat.of().formatHex(digest.digest())));
-            }
-            return new AnalysisKey(path, debug, List.copyOf(sources));
+            return MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
