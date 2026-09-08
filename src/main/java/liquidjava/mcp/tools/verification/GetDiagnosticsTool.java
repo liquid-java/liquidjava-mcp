@@ -23,6 +23,7 @@ public final class GetDiagnosticsTool extends AbstractMcpTool {
         this.verifier = verifier;
     }
 
+    @Override
     public CallToolResult call(Map<String, Object> arguments) {
         String inputError = validateInput(arguments);
         if (inputError != null)

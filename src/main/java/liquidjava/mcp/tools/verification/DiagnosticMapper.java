@@ -1,11 +1,17 @@
 package liquidjava.mcp.tools.verification;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Collection;
 import liquidjava.diagnostics.LJDiagnostic;
-import liquidjava.diagnostics.errors.*;
+import liquidjava.diagnostics.errors.InvalidRefinementError;
+import liquidjava.diagnostics.errors.LJError;
+import liquidjava.diagnostics.errors.RefinementError;
+import liquidjava.diagnostics.errors.StateConflictError;
+import liquidjava.diagnostics.errors.StateRefinementError;
+import liquidjava.diagnostics.errors.SyntaxError;
 import liquidjava.diagnostics.warnings.UnsatisfiableRefinementWarning;
 import liquidjava.mcp.utils.Utils;
 import liquidjava.rj_language.Predicate;
@@ -27,7 +33,7 @@ final class DiagnosticMapper {
         put(result, "declarationLocation", Utils.mapPosition(diagnostic.getDeclarationPosition()));
         put(result, "hint", diagnostic.getHint());
         put(result, "customMessage", diagnostic.getCustomMessage());
-        put(result, "refinements", getRefinements(diagnostic));;
+        put(result, "refinements", getRefinements(diagnostic));
         put(result, "vc", getVC(diagnostic));
         put(result, "counterexample", getCounterexample(diagnostic));
         return Map.copyOf(result);
@@ -100,7 +106,7 @@ final class DiagnosticMapper {
         WARNING;
 
         private String wireValue() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 }

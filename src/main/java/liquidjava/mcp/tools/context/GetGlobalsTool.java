@@ -21,6 +21,7 @@ public final class GetGlobalsTool extends AbstractMcpTool {
         this.inspector = inspector;
     }
 
+    @Override
     public CallToolResult call(Map<String, Object> arguments) {
         String inputError = validateInput(arguments);
         if (inputError != null)

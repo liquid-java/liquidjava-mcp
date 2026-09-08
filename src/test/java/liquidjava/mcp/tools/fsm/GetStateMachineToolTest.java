@@ -54,4 +54,14 @@ class GetStateMachineToolTest {
             assertNull(content.get("stateMachine"));
         }
     }
+
+    @Test
+    void reportsParserFailuresAsVerifierErrors() {
+        var result = tool.call(Map.of("path", "src/test/resources/examples/Malformed.java"));
+
+        assertTrue(result.isError());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals("VERIFIER_ERROR", ((Map<?, ?>) content.get("error")).get("code"));
+        assertNull(content.get("stateMachine"));
+    }
 }

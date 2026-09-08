@@ -1,6 +1,7 @@
 package liquidjava.mcp.tools.smt;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import liquidjava.mcp.tools.McpErrorCode;
 import liquidjava.smt.Counterexample;
@@ -30,7 +31,7 @@ public record SmtResult(Status status, List<Map<String, String>> assignment, Fai
         UNKNOWN;
 
         public String wireValue() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 

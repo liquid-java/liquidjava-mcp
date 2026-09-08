@@ -6,8 +6,6 @@ import java.util.List;
 public final class ValidityChecker {
     private final SmtChecker smtChecker = new SmtChecker();
 
-    public ValidityChecker() {}
-
     public ValidityResult check(ValidityRequest request) {
         List<String> constraints = new ArrayList<>(request.assumptions());
         constraints.add("!(" + request.conclusion() + ")");

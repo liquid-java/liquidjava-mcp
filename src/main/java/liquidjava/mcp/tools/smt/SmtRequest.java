@@ -17,14 +17,17 @@ public record SmtRequest(Map<String, String> variables, List<String> constraints
     }
 
     public static SmtRequest fromArguments(Map<String, Object> arguments) {
+        return new SmtRequest(
+            variables(arguments),
+            ((List<?>) arguments.get("constraints")).stream().map(String.class::cast).toList()
+        );
+    }
+
+    static Map<String, String> variables(Map<String, Object> arguments) {
         Map<?, ?> declarations = (Map<?, ?>) arguments.get("variables");
         Map<String, String> variables = new LinkedHashMap<>();
         declarations.forEach((name, type) -> variables.put((String) name, (String) type));
-
-        return new SmtRequest(
-            variables,
-            ((List<?>) arguments.get("constraints")).stream().map(String.class::cast).toList()
-        );
+        return variables;
     }
 
     static void validateVariables(Map<String, String> variables) {

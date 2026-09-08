@@ -28,25 +28,37 @@ public final class GetStateMachineTool extends AbstractMcpTool {
     public CallToolResult call(Map<String, Object> arguments) {
         String inputError = validateInput(arguments);
         if (inputError != null) {
-            Map<String, Object> content = new LinkedHashMap<>();
-            addError(content, McpErrorCode.INVALID_INPUT, inputError);
-            content.put("stateMachine", null);
-            return result(content, true);
+            return errorResult(McpErrorCode.INVALID_INPUT, inputError);
         }
+
+        StateMachineRequest request;
         try {
-            StateMachineRequest request = StateMachineRequest.fromArguments(arguments);
+            request = StateMachineRequest.fromArguments(arguments);
+        } catch (IllegalArgumentException e) {
+            return errorResult(McpErrorCode.INVALID_INPUT, e.getMessage());
+        }
+
+        try {
             StateMachine stateMachine = StateMachineParser.parse(
                 Path.of(request.path()).toAbsolutePath().normalize().toUri().toString());
 
             Map<String, Object> content = new LinkedHashMap<>();
             content.put("stateMachine", map(stateMachine));
             return result(content, false);
-        } catch (IllegalArgumentException e) {
-            Map<String, Object> content = new LinkedHashMap<>();
-            addError(content, McpErrorCode.INVALID_INPUT, e.getMessage());
-            content.put("stateMachine", null);
-            return result(content, true);
+        } catch (Exception e) {
+            return errorResult(McpErrorCode.VERIFIER_ERROR, message(e));
         }
+    }
+
+    private CallToolResult errorResult(McpErrorCode code, String message) {
+        Map<String, Object> content = new LinkedHashMap<>();
+        addError(content, code, message);
+        content.put("stateMachine", null);
+        return result(content, true);
+    }
+
+    private static String message(Throwable error) {
+        return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
     }
 
     private static Map<String, Object> map(StateMachine stateMachine) {

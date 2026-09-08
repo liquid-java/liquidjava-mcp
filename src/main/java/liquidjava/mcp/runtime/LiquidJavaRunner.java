@@ -17,6 +17,7 @@ import java.util.function.Function;
 import liquidjava.api.CommandLineArgs;
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.diagnostics.Diagnostics;
+import liquidjava.diagnostics.warnings.CustomWarning;
 import liquidjava.mcp.utils.Utils;
 import liquidjava.processor.context.Context;
 
@@ -98,16 +99,15 @@ public final class LiquidJavaRunner {
             Context.getInstance().reinitializeAllContext();
 
             if (key != null && key.sources().isEmpty())
-                return failure.apply("Analysis incomplete: No Java source files found in " + path, "");
+                return failure.apply("No Java source files found in " + path, "");
 
             analysis.run();
             if (cancelled.get()) return null;
             String output = Utils.stripAnsi(bytes);
-            if (Diagnostics.getInstance().getWarnings().stream()
-                    .anyMatch(warning -> warning.getMessage().equals("Java compilation encountered issues. Verification may be affected.")))
-                return failure.apply("Analysis incomplete: " + output, output);
-            T result = snapshot.apply(output);
+            if (javaCompilationWarning())
+                return failure.apply("Java compilation encountered issues.\n" + output, output);
 
+            T result = snapshot.apply(output);
             // only cache analyses whose sources stayed unchanged throughout execution
             if (!cancelled.get() && key != null && key.equals(readKey(path, debug))) {
                 cachedAnalysis = new CachedAnalysis(key, output);
@@ -133,6 +133,10 @@ public final class LiquidJavaRunner {
         args.debugMode = debug;
         args.lspMode = true;
         args.paths = List.of(path);
+    }
+
+    private static boolean javaCompilationWarning() {
+        return Diagnostics.getInstance().getWarnings().stream().anyMatch(w -> w instanceof CustomWarning && w.getPosition() == null);
     }
 
     private static AnalysisKey readKey(String path, boolean debug) {

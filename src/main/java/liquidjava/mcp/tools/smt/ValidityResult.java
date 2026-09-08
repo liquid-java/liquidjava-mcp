@@ -1,19 +1,13 @@
 package liquidjava.mcp.tools.smt;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import liquidjava.mcp.tools.McpErrorCode;
-import liquidjava.smt.Counterexample;
 
 public record ValidityResult(Status status, List<Map<String, String>> counterexample, Failure error) {
     public static ValidityResult valid() {
         return new ValidityResult(Status.VALID, null, null);
-    }
-
-    public static ValidityResult invalid(Counterexample counterexample) {
-        List<Map<String, String>> assignments = counterexample.assignments().stream()
-            .map(pair -> Map.of("variable", pair.first(), "value", pair.second())).toList();
-        return new ValidityResult(Status.INVALID, assignments, null);
     }
 
     public static ValidityResult invalid(List<Map<String, String>> counterexample) {
@@ -34,7 +28,7 @@ public record ValidityResult(Status status, List<Map<String, String>> counterexa
         UNKNOWN;
 
         public String wireValue() {
-            return name().toLowerCase(java.util.Locale.ROOT);
+            return name().toLowerCase(Locale.ROOT);
         }
     }
 
