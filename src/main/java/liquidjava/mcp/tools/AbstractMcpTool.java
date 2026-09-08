@@ -14,6 +14,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Provides the common MCP lifecycle for LiquidJava tools.
@@ -28,13 +29,12 @@ public abstract class AbstractMcpTool {
         Tool tool = Tool.builder(name, schemas.inputSchema())
             .description(description.stripIndent().trim())
             .outputSchema(schemas.outputSchema())
-            .annotations(
-                ToolAnnotations.builder()
-                    .readOnlyHint(true)
-                    .destructiveHint(false)
-                    .idempotentHint(true)
-                    .openWorldHint(false)
-                    .build()
+            .annotations(ToolAnnotations.builder()
+                .readOnlyHint(true)
+                .destructiveHint(false)
+                .idempotentHint(true)
+                .openWorldHint(false)
+                .build()
             )
             .build();
         this.specification = SyncToolSpecification.builder()
@@ -49,7 +49,26 @@ public abstract class AbstractMcpTool {
 
     public abstract CallToolResult call(Map<String, Object> arguments);
 
-    protected final String validateInput(Map<String, Object> arguments) {
+    protected final <T> CallToolResult handleRequest(
+        Map<String, Object> arguments,
+        Function<Map<String, Object>, T> parser,
+        Function<T, CallToolResult> handler,
+        Function<String, CallToolResult> invalidInput
+    ) {
+        String inputError = validateInput(arguments);
+        if (inputError != null)
+            return invalidInput.apply(inputError);
+
+        T request;
+        try {
+            request = parser.apply(arguments);
+        } catch (IllegalArgumentException e) {
+            return invalidInput.apply(e.getMessage());
+        }
+        return handler.apply(request);
+    }
+
+    private String validateInput(Map<String, Object> arguments) {
         ValidationResponse validation = McpJsonDefaults.getSchemaValidator().validate(inputSchema, arguments == null ? Map.of() : arguments);
         return validation.valid() ? null : validation.errorMessage();
     }
@@ -75,8 +94,9 @@ public abstract class AbstractMcpTool {
                 String content = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
                 Map<String, Map<String, Object>> schemas = jsonMapper.readValue(content, new TypeRef<>() {});
                 return new Schemas(
-                        Objects.requireNonNull(schemas.get("inputSchema"), "missing input schema"),
-                        Objects.requireNonNull(schemas.get("outputSchema"), "missing output schema"));
+                    Objects.requireNonNull(schemas.get("inputSchema"), "missing input schema"),
+                    Objects.requireNonNull(schemas.get("outputSchema"), "missing output schema")
+                );
             } catch (IOException e) {
                 throw new UncheckedIOException("Could not load tool schemas resource: " + resourcePath, e);
             }

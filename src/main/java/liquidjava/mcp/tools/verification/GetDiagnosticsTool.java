@@ -25,17 +25,10 @@ public final class GetDiagnosticsTool extends AbstractMcpTool {
 
     @Override
     public CallToolResult call(Map<String, Object> arguments) {
-        String inputError = validateInput(arguments);
-        if (inputError != null)
-            return toMcpResult(VerifyResult.failed(McpErrorCode.INVALID_INPUT, inputError, ""));
-
-        VerifyRequest request;
-        try {
-            request = VerifyRequest.fromArguments(arguments);
-        } catch (IllegalArgumentException e) {
-            return toMcpResult(VerifyResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage(), ""));
-        }
-        return toMcpResult(verifier.verify(request));
+        return handleRequest(arguments, VerifyRequest::fromArguments,
+            request -> toMcpResult(verifier.verify(request)),
+            message -> toMcpResult(VerifyResult.failed(McpErrorCode.INVALID_INPUT, message, ""))
+        );
     }
 
     private CallToolResult toMcpResult(VerifyResult result) {
@@ -45,6 +38,7 @@ public final class GetDiagnosticsTool extends AbstractMcpTool {
         content.put("warnings", result.warnings());
         if (result.error() != null)
             addError(content, result.error().code(), result.error().message());
+
         return result(content, result.error() != null);
     }
 }

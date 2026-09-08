@@ -25,17 +25,10 @@ public final class CheckSatisfiabilityTool extends AbstractMcpTool {
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
-        String inputError = validateInput(arguments);
-        if (inputError != null)
-            return toMcpResult(SmtResult.failed(McpErrorCode.INVALID_INPUT, inputError));
-
-        SmtRequest request;
-        try {
-            request = SmtRequest.fromArguments(arguments);
-        } catch (IllegalArgumentException e) {
-            return toMcpResult(SmtResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage()));
-        }
-        return toMcpResult(checker.apply(request));
+        return handleRequest(arguments, SmtRequest::fromArguments,
+            request -> toMcpResult(checker.apply(request)),
+            message -> toMcpResult(SmtResult.failed(McpErrorCode.INVALID_INPUT, message))
+        );
     }
 
     private CallToolResult toMcpResult(SmtResult result) {
@@ -44,6 +37,7 @@ public final class CheckSatisfiabilityTool extends AbstractMcpTool {
         if (result.assignment() != null) content.put("assignment", result.assignment());
         if (result.error() != null)
             addError(content, result.error().code(), result.error().message());
+        
         return result(content, result.error() != null);
     }
 }

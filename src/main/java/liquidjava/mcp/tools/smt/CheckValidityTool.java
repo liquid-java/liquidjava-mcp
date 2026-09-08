@@ -28,17 +28,10 @@ public final class CheckValidityTool extends AbstractMcpTool {
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
-        String inputError = validateInput(arguments);
-        if (inputError != null)
-            return toMcpResult(ValidityResult.failed(McpErrorCode.INVALID_INPUT, inputError));
-
-        ValidityRequest request;
-        try {
-            request = ValidityRequest.fromArguments(arguments);
-        } catch (IllegalArgumentException e) {
-            return toMcpResult(ValidityResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage()));
-        }
-        return toMcpResult(checker.apply(request));
+        return handleRequest(arguments, ValidityRequest::fromArguments,
+            request -> toMcpResult(checker.apply(request)),
+            message -> toMcpResult(ValidityResult.failed(McpErrorCode.INVALID_INPUT, message))
+        );
     }
 
     private CallToolResult toMcpResult(ValidityResult result) {
@@ -47,6 +40,7 @@ public final class CheckValidityTool extends AbstractMcpTool {
         if (result.counterexample() != null) content.put("counterexample", result.counterexample());
         if (result.error() != null)
             addError(content, result.error().code(), result.error().message());
+        
         return result(content, result.error() != null);
     }
 }

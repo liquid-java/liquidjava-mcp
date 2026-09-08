@@ -24,18 +24,10 @@ public final class GetLocalsTool extends AbstractMcpTool {
 
     @Override
     public CallToolResult call(Map<String, Object> arguments) {
-        String inputError = validateInput(arguments);
-        if (inputError != null)
-            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, inputError));
-
-        ContextRequest request;
-        try {
-            request = ContextRequest.fromPositionArguments(arguments);
-        } catch (IllegalArgumentException e) {
-            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage()));
-        }
-        ContextResult result = inspector.getLocals(request);
-        return toMcpResult(result);
+        return handleRequest(arguments, ContextRequest::fromPositionArguments,
+            request -> toMcpResult(inspector.getLocals(request)),
+            message -> toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, message))
+        );
     }
 
     private CallToolResult toMcpResult(ContextResult result) {
@@ -43,6 +35,7 @@ public final class GetLocalsTool extends AbstractMcpTool {
         content.put("variables", result.context().getOrDefault("variables", List.of()));
         if (result.error() != null)
             addError(content, result.error().code(), result.error().message());
+        
         return result(content, result.error() != null);
     }
 }

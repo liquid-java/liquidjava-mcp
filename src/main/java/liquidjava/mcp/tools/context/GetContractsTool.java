@@ -26,17 +26,10 @@ public final class GetContractsTool extends AbstractMcpTool {
 
     @Override
     public CallToolResult call(Map<String, Object> arguments) {
-        String inputError = validateInput(arguments);
-        if (inputError != null)
-            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, inputError));
-
-        ContractRequest request;
-        try {
-            request = ContractRequest.fromArguments(arguments);
-        } catch (IllegalArgumentException e) {
-            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage()));
-        }
-        return toMcpResult(inspector.getContracts(request));
+        return handleRequest(arguments, ContractRequest::fromArguments,
+            request -> toMcpResult(inspector.getContracts(request)),
+            message -> toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, message))
+        );
     }
 
     private CallToolResult toMcpResult(ContextResult result) {
@@ -44,6 +37,7 @@ public final class GetContractsTool extends AbstractMcpTool {
         content.put("contracts", result.context().getOrDefault("contracts", List.of()));
         if (result.error() != null)
             addError(content, result.error().code(), result.error().message());
+        
         return result(content, result.error() != null);
     }
 }

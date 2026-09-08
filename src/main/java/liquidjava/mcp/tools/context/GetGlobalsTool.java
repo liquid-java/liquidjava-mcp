@@ -23,18 +23,10 @@ public final class GetGlobalsTool extends AbstractMcpTool {
 
     @Override
     public CallToolResult call(Map<String, Object> arguments) {
-        String inputError = validateInput(arguments);
-        if (inputError != null)
-            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, inputError));
-
-        ContextRequest request;
-        try {
-            request = ContextRequest.fromGlobalArguments(arguments);
-        } catch (IllegalArgumentException e) {
-            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage()));
-        }
-        ContextResult result = inspector.getGlobals(request);
-        return toMcpResult(result);
+        return handleRequest(arguments, ContextRequest::fromGlobalArguments,
+            request -> toMcpResult(inspector.getGlobals(request)),
+            message -> toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, message))
+        );
     }
 
     private CallToolResult toMcpResult(ContextResult result) {
@@ -44,6 +36,7 @@ public final class GetGlobalsTool extends AbstractMcpTool {
         content.put("states", result.context().getOrDefault("states", List.of()));
         if (result.error() != null)
             addError(content, result.error().code(), result.error().message());
+        
         return result(content, result.error() != null);
     }
 }
