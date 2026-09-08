@@ -53,6 +53,24 @@ class LiquidJavaVerifierTest {
     }
 
     @Test
+    void malformedJavaReportsIncompleteAnalysis() {
+        var result = verify(example("Malformed.java"));
+        assertFalse(result.success());
+        assertNotNull(result.error());
+        assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
+        assertTrue(result.error().message().contains("Java compilation encountered issues"));
+        assertTrue(result.output().contains("Java compilation encountered issues"));
+    }
+
+    @Test
+    void emptyDirectoryDoesNotPassVerification() {
+        var result = verify(temporary.toString());
+        assertFalse(result.success());
+        assertNotNull(result.error());
+        assertTrue(result.error().message().contains("No Java source files"));
+    }
+
+    @Test
     void warningsAloneStillPass() {
         var result = verify(example("Warning.java"));
         assertTrue(result.success(), result.toString());

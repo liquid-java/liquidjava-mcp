@@ -16,6 +16,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import liquidjava.api.CommandLineArgs;
 import liquidjava.api.CommandLineLauncher;
+import liquidjava.diagnostics.Diagnostics;
 import liquidjava.mcp.utils.Utils;
 import liquidjava.processor.context.Context;
 
@@ -80,10 +81,17 @@ public final class LiquidJavaRunner {
                 cachedOutput = null;
                 Context.getInstance().reinitializeAllContext();
 
+                if (key != null && key.sources().isEmpty())
+                    return failure.apply("Analysis incomplete: No Java source files found in " + path, "");
+
                 // run LiquidJava on the specified path
                 analysis.run();
                 if (cancelled.get()) return null;
                 String output = Utils.stripAnsi(bytes);
+                String compilationWarning = "Java compilation encountered issues. Verification may be affected.";
+                if (Diagnostics.getInstance().getWarnings().stream()
+                        .anyMatch(warning -> warning.getMessage().equals(compilationWarning)))
+                    return failure.apply("Analysis incomplete: " + compilationWarning, output);
                 T result = snapshot.apply(output);
 
                 // update cached result if the analysis key matches

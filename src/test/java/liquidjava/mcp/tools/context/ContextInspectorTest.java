@@ -26,6 +26,22 @@ class ContextInspectorTest {
     @TempDir Path temporary;
 
     @Test
+    void incompleteAnalysisIsExposedByBothContextQueries() {
+        var inspector = new ContextInspector();
+        String path = "src/test/resources/examples/Malformed.java";
+        var request = new ContextRequest(path, path, 1, 1);
+        for (var result : List.of(inspector.getLocals(request), inspector.getGlobals(request))) {
+            assertNotNull(result.error(), result.toString());
+            assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
+            assertTrue(result.error().message().contains("Java compilation encountered issues"));
+            assertTrue(result.context().isEmpty());
+        }
+        var empty = inspector.getGlobals(new ContextRequest(temporary.toString(), null, null, null));
+        assertNotNull(empty.error());
+        assertTrue(empty.error().message().contains("No Java source files"));
+    }
+
+    @Test
     void concurrentContextAndVerificationCallsKeepSeparateSnapshots() throws Exception {
         var jobs = new ArrayList<Callable<Void>>();
         var request = new ContextRequest("src/test/resources/examples/Context.java",
