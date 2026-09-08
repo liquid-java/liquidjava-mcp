@@ -20,7 +20,7 @@ public final class GetStateMachineTool extends AbstractMcpTool {
         super("get_state_machine", """
             Parses a Java source file and returns its LiquidJava state machine, including states, initial transitions, method transitions, and guards.
             Guards are any non-state conditions in the source and target refinements of a transition, such as `cond ? state1 : state2` or `cond && state1`, represented by `fromCondition` and `toCondition`.
-            Returns a null `stateMachine` when the file does not declare a state machine.
+            Requires files to declare a typestate protocol using @StateSet and @StateRefinement annotations, otherwise returns a null `stateMachine`.
         """, jsonMapper);
     }
 
