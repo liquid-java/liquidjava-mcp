@@ -23,6 +23,10 @@ public final class GetLocalsTool extends AbstractMcpTool {
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
+        String inputError = validateInput(arguments);
+        if (inputError != null)
+            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, inputError));
+
         ContextRequest request;
         try {
             request = ContextRequest.fromPositionArguments(arguments);

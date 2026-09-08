@@ -13,37 +13,24 @@ public record ValidityRequest(Map<String, String> variables, List<String> assump
     public ValidityRequest {
         variables = Map.copyOf(variables);
         assumptions = List.copyOf(assumptions);
+        variables.forEach((name, type) -> {
+            if (!validName(name))
+                throw new IllegalArgumentException("invalid variable name: " + name);
+            if (!TYPES.contains(type))
+                throw new IllegalArgumentException("unsupported variable type: " + type);
+        });
     }
 
     public static ValidityRequest fromArguments(Map<String, Object> arguments) {
-        if (arguments == null || !arguments.keySet().equals(Set.of("variables", "assumptions", "conclusion")))
-            throw new IllegalArgumentException("expected exactly variables, assumptions, and conclusion");
-
-        if (!(arguments.get("variables") instanceof Map<?, ?> declarations))
-            throw new IllegalArgumentException("variables must map names to types");
-
+        Map<?, ?> declarations = (Map<?, ?>) arguments.get("variables");
         Map<String, String> variables = new LinkedHashMap<>();
-        declarations.forEach((name, type) -> {
-            if (!(name instanceof String nameText) || !validName(nameText))
-                throw new IllegalArgumentException("invalid variable name: " + name);
-            if (!(type instanceof String typeText) || !TYPES.contains(typeText))
-                throw new IllegalArgumentException("unsupported variable type: " + type);
-            variables.put((String) name, (String) type);
-        });
-        if (!(arguments.get("assumptions") instanceof List<?> assumptions))
-            throw new IllegalArgumentException("assumptions must be an array of predicates");
+        declarations.forEach((name, type) -> variables.put((String) name, (String) type));
 
         return new ValidityRequest(
             variables,
-            assumptions.stream().map(value -> predicate(value, "assumption")).toList(),
-            predicate(arguments.get("conclusion"), "conclusion")
+            ((List<?>) arguments.get("assumptions")).stream().map(String.class::cast).toList(),
+            (String) arguments.get("conclusion")
         );
-    }
-
-    private static String predicate(Object value, String field) {
-        if (!(value instanceof String text) || text.isBlank())
-            throw new IllegalArgumentException(field + " must be a nonempty predicate string");
-        return text;
     }
 
     private static boolean validName(String name) {

@@ -28,6 +28,10 @@ public final class CheckValidityTool extends AbstractMcpTool {
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
+        String inputError = validateInput(arguments);
+        if (inputError != null)
+            return toMcpResult(ValidityResult.failed(McpErrorCode.INVALID_INPUT, inputError));
+
         ValidityRequest request;
         try {
             request = ValidityRequest.fromArguments(arguments);

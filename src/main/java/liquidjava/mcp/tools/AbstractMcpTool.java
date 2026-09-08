@@ -1,7 +1,9 @@
 package liquidjava.mcp.tools;
 
+import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.json.TypeRef;
+import io.modelcontextprotocol.json.schema.JsonSchemaValidator.ValidationResponse;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
@@ -18,11 +20,11 @@ import java.util.Objects;
  */
 public abstract class AbstractMcpTool {
     private final SyncToolSpecification specification;
-    private final McpJsonMapper jsonMapper;
+    private final Map<String, Object> inputSchema;
 
     protected AbstractMcpTool(String name, String description, McpJsonMapper jsonMapper) {
-        this.jsonMapper = jsonMapper;
         Schemas schemas = Schemas.load(name, jsonMapper);
+        this.inputSchema = schemas.inputSchema();
         Tool tool = Tool.builder(name, schemas.inputSchema())
             .description(description.stripIndent().trim())
             .outputSchema(schemas.outputSchema())
@@ -46,6 +48,11 @@ public abstract class AbstractMcpTool {
     }
 
     public abstract CallToolResult call(Map<String, Object> arguments);
+
+    protected final String validateInput(Map<String, Object> arguments) {
+        ValidationResponse validation = McpJsonDefaults.getSchemaValidator().validate(inputSchema, arguments == null ? Map.of() : arguments);
+        return validation.valid() ? null : validation.errorMessage();
+    }
 
     protected final void addError(Map<String, Object> content, McpErrorCode code, String message) {
         content.put("error", Map.of("code", code.name(), "message", message));

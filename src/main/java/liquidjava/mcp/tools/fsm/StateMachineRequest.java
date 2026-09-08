@@ -19,10 +19,6 @@ public record StateMachineRequest(String path) {
     }
 
     public static StateMachineRequest fromArguments(Map<String, Object> arguments) {
-        if (arguments == null || !arguments.keySet().equals(java.util.Set.of("path")))
-            throw new IllegalArgumentException("expected exactly one argument: path");
-        if (!(arguments.get("path") instanceof String path))
-            throw new IllegalArgumentException("path must be a nonblank string");
-        return new StateMachineRequest(path);
+        return new StateMachineRequest((String) arguments.get("path"));
     }
 }

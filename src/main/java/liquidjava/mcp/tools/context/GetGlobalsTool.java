@@ -22,6 +22,10 @@ public final class GetGlobalsTool extends AbstractMcpTool {
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
+        String inputError = validateInput(arguments);
+        if (inputError != null)
+            return toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, inputError));
+
         ContextRequest request;
         try {
             request = ContextRequest.fromGlobalArguments(arguments);

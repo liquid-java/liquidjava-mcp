@@ -24,10 +24,12 @@ public final class GetDiagnosticsTool extends AbstractMcpTool {
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
+        String inputError = validateInput(arguments);
+        if (inputError != null)
+            return toMcpResult(VerifyResult.failed(McpErrorCode.INVALID_INPUT, inputError, ""));
+
         VerifyRequest request;
         try {
-            if (arguments == null || !arguments.keySet().equals(java.util.Set.of("path")))
-                throw new IllegalArgumentException("expected exactly one argument: path");
             request = VerifyRequest.fromArguments(arguments);
         } catch (IllegalArgumentException e) {
             return toMcpResult(VerifyResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage(), ""));

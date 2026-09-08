@@ -3,7 +3,6 @@ package liquidjava.mcp.tools.verification;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Set;
 
 public record VerifyRequest(String path, boolean debug) {
     public VerifyRequest {
@@ -17,15 +16,7 @@ public record VerifyRequest(String path, boolean debug) {
     }
 
     public static VerifyRequest fromArguments(Map<String, Object> arguments) {
-        if (arguments == null || !arguments.containsKey("path")
-                || !Set.of("path", "debug").containsAll(arguments.keySet()))
-            throw new IllegalArgumentException("expected path and optional debug");
-
-        if (!(arguments.get("path") instanceof String path))
-            throw new IllegalArgumentException("path must be a nonblank string");
-        if (arguments.containsKey("debug") && !(arguments.get("debug") instanceof Boolean))
-            throw new IllegalArgumentException("debug must be a boolean");
-
-        return new VerifyRequest(path, Boolean.TRUE.equals(arguments.get("debug")));
+        return new VerifyRequest((String) arguments.get("path"),
+                arguments.containsKey("debug") && (Boolean) arguments.get("debug"));
     }
 }

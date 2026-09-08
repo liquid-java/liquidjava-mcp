@@ -26,6 +26,13 @@ public final class GetStateMachineTool extends AbstractMcpTool {
 
     @Override
     public CallToolResult call(Map<String, Object> arguments) {
+        String inputError = validateInput(arguments);
+        if (inputError != null) {
+            Map<String, Object> content = new LinkedHashMap<>();
+            addError(content, McpErrorCode.INVALID_INPUT, inputError);
+            content.put("stateMachine", null);
+            return result(content, true);
+        }
         try {
             StateMachineRequest request = StateMachineRequest.fromArguments(arguments);
             StateMachine stateMachine = StateMachineParser.parse(

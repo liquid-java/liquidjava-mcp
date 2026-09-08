@@ -24,6 +24,10 @@ public final class VerifyTool extends AbstractMcpTool {
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
+        String inputError = validateInput(arguments);
+        if (inputError != null)
+            return toMcpResult(VerifyResult.failed(McpErrorCode.INVALID_INPUT, inputError, ""));
+
         VerifyRequest request;
         try {
             request = VerifyRequest.fromArguments(arguments);
