@@ -1,6 +1,5 @@
 package liquidjava.mcp.tools.context;
 
-import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,7 +21,7 @@ final class ContextMapper {
     static Map<String, Object> locals(ContextRequest request) {
         ContextHistory history = ContextHistory.getInstance();
         List<Range> scopes = history.getFileScopes().entrySet().stream()
-            .filter(entry -> sameFile(entry.getKey(), request.file()))
+            .filter(entry -> Utils.samePath(entry.getKey(), request.file()))
             .flatMap(entry -> entry.getValue().stream())
             .map(Range::parse)
             .toList();
@@ -58,7 +57,7 @@ final class ContextMapper {
     private static List<Map<String, Object>> ghosts(Context context, String file) {
         return context.getGhostStates().stream()
             .filter(state -> state.getParent() == null)
-            .filter(state -> file == null || state.getFile() != null && sameFile(state.getFile(), file))
+            .filter(state -> file == null || state.getFile() != null && Utils.samePath(state.getFile(), file))
             .sorted(Comparator.comparing(GhostFunction::getQualifiedName))
             .map(ContextMapper::ghost)
             .distinct()
@@ -68,7 +67,7 @@ final class ContextMapper {
     private static List<Map<String, Object>> states(Context context, String file) {
         return context.getGhostStates().stream()
             .filter(state -> state.getParent() != null)
-            .filter(state -> file == null || state.getFile() != null && sameFile(state.getFile(), file))
+            .filter(state -> file == null || state.getFile() != null && Utils.samePath(state.getFile(), file))
             .sorted(Comparator.comparing(GhostState::getQualifiedName))
             .map(ContextMapper::ghost)
             .toList();
@@ -78,7 +77,7 @@ final class ContextMapper {
         if (variable.getPlacementInCode() == null) return false;
         SourcePosition position = variable.getPlacementInCode().getPosition();
         if (position == null || !position.isValidPosition() || position.getFile() == null) return false;
-        if (!sameFile(position.getFile().toString(), file)) return false;
+        if (!Utils.samePath(position.getFile().toString(), file)) return false;
 
         Range declaration = Range.from(position);
         if (!declaration.startsBefore(cursor)) return false;
@@ -124,7 +123,4 @@ final class ContextMapper {
         return Map.copyOf(result);
     }
 
-    private static boolean sameFile(String left, String right) {
-        return Path.of(left).toAbsolutePath().normalize().equals(Path.of(right).toAbsolutePath().normalize());
-    }
 }

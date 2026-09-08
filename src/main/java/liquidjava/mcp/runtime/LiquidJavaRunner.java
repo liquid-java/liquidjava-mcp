@@ -38,11 +38,11 @@ public final class LiquidJavaRunner {
                 args.lspMode = captureContext;
                 args.paths = null;
                 CommandLineLauncher.main(new String[] {"--", path});
-                return snapshot.apply(Utils.getPlainOutput(bytes));
+                return snapshot.apply(Utils.stripAnsi(bytes));
             } catch (Exception | LinkageError e) {
                 e.printStackTrace(System.err);
                 String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                return failure.apply(message, Utils.getPlainOutput(bytes));
+                return failure.apply(message, Utils.stripAnsi(bytes));
             } finally {
                 CommandLineLauncher.cmdArgs.lspMode = false;
                 CommandLineLauncher.cmdArgs.debugMode = false;
