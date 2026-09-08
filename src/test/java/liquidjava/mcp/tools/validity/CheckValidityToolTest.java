@@ -7,6 +7,7 @@ import io.modelcontextprotocol.json.TypeRef;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import java.util.List;
 import java.util.Map;
+import liquidjava.mcp.tools.McpErrorCode;
 import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
 import liquidjava.mcp.tools.verification.VerifyRequest;
 import org.junit.jupiter.api.Test;
@@ -76,7 +77,7 @@ class CheckValidityToolTest {
     @Test
     void serializesUnknownAndExecutionErrors() {
         for (var outcome : List.of(ValidityResult.unknown("incomplete theory"),
-                ValidityResult.failed("VERIFIER_ERROR", "solver unavailable"))) {
+                ValidityResult.failed(McpErrorCode.VERIFIER_ERROR, "solver unavailable"))) {
             var stub = new CheckValidityTool(request -> outcome, McpJsonDefaults.getMapper());
             var result = stub.call(query(Map.of(), List.of(), "true"));
             assertEquals(outcome.error() != null, result.isError());

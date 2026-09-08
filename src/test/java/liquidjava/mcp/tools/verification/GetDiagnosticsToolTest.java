@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import liquidjava.mcp.tools.McpErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
 
@@ -107,7 +108,7 @@ class GetDiagnosticsToolTest {
     @Test
     void executionFailuresUseTheStructuredErrorContract() {
         var failing = new GetDiagnosticsTool(request -> VerifyResult.failed(
-                VerifyResult.ErrorCode.VERIFIER_ERROR, "failed", "partial output"),
+                McpErrorCode.VERIFIER_ERROR, "failed", "partial output"),
                 McpJsonDefaults.getMapper());
         var result = failing.call(Map.of("path", "Example.java"));
         assertTrue(result.isError());

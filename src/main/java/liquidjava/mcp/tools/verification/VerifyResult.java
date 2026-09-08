@@ -2,6 +2,7 @@ package liquidjava.mcp.tools.verification;
 
 import java.util.List;
 import java.util.Map;
+import liquidjava.mcp.tools.McpErrorCode;
 
 public record VerifyResult(boolean success, String output, List<Map<String, Object>> errors, List<Map<String, Object>> warnings, Failure error) {
     public VerifyResult {
@@ -15,11 +16,9 @@ public record VerifyResult(boolean success, String output, List<Map<String, Obje
         return new VerifyResult(success, output, errors, warnings, null);
     }
 
-    public static VerifyResult failed(ErrorCode code, String message, String output) {
+    public static VerifyResult failed(McpErrorCode code, String message, String output) {
         return new VerifyResult(false, output, List.of(), List.of(), new Failure(code, message));
     }
 
-    public enum ErrorCode { INVALID_INPUT, VERIFIER_ERROR }
-
-    public record Failure(ErrorCode code, String message) {}
+    public record Failure(McpErrorCode code, String message) {}
 }

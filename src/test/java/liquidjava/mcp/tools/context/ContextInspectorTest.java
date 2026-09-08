@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import liquidjava.api.CommandLineLauncher;
+import liquidjava.mcp.tools.McpErrorCode;
 import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
 import liquidjava.mcp.tools.verification.VerifyRequest;
 import org.junit.jupiter.api.Test;
@@ -77,7 +78,7 @@ class ContextInspectorTest {
             System.setErr(capture);
             var result = inspector.getGlobals(new ContextRequest(broken.toString(), broken.toString(), null, null));
             assertNotNull(result.error());
-            assertEquals(ContextResult.ErrorCode.VERIFIER_ERROR, result.error().code());
+        assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
             assertTrue(result.context().isEmpty());
         } finally {
             System.setErr(originalErr);

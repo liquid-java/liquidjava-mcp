@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+import liquidjava.mcp.tools.McpErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -65,7 +66,7 @@ class VerifyToolTest {
     @Test
     void executionErrorIncludesPartialOutputAndStructuredFailure() throws Exception {
         var tool = new VerifyTool(
-            request -> VerifyResult.failed(VerifyResult.ErrorCode.VERIFIER_ERROR, "parse failed", "Running LiquidJava on: Example.java\n"),
+            request -> VerifyResult.failed(McpErrorCode.VERIFIER_ERROR, "parse failed", "Running LiquidJava on: Example.java\n"),
             McpJsonDefaults.getMapper()
         );
         var result = tool.call(Map.of("path", "Example.java"));

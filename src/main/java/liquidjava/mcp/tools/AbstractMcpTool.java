@@ -47,8 +47,8 @@ public abstract class AbstractMcpTool {
 
     public abstract CallToolResult call(Map<String, Object> arguments);
 
-    protected final void addError(Map<String, Object> content, String code, String message) {
-        content.put("error", Map.of("code", code, "message", message));
+    protected final void addError(Map<String, Object> content, McpErrorCode code, String message) {
+        content.put("error", Map.of("code", code.name(), "message", message));
     }
 
     protected final CallToolResult result(Map<String, Object> content, boolean error) {

@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 import liquidjava.mcp.tools.AbstractMcpTool;
+import liquidjava.mcp.tools.McpErrorCode;
 
 /**
  * Checks whether explicit refinement assumptions imply a conclusion.
@@ -31,14 +32,14 @@ public final class CheckValidityTool extends AbstractMcpTool {
         try {
             request = ValidityRequest.fromArguments(arguments);
         } catch (IllegalArgumentException e) {
-            return toMcpResult(ValidityResult.failed("INVALID_INPUT", e.getMessage()));
+            return toMcpResult(ValidityResult.failed(McpErrorCode.INVALID_INPUT, e.getMessage()));
         }
         return toMcpResult(checker.apply(request));
     }
 
     private CallToolResult toMcpResult(ValidityResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
-        if (result.status() != null) content.put("status", result.status());
+        if (result.status() != null) content.put("status", result.status().wireValue());
         if (result.counterexample() != null) content.put("counterexample", result.counterexample());
         if (result.reason() != null) content.put("reason", result.reason());
         if (result.error() != null)

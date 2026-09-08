@@ -3,11 +3,12 @@ package liquidjava.mcp.tools.context;
 import java.util.Map;
 import java.util.function.Supplier;
 import liquidjava.mcp.runtime.LiquidJavaRunner;
+import liquidjava.mcp.tools.McpErrorCode;
 
 public final class ContextInspector {
     public ContextResult getLocals(ContextRequest request) {
         if (request.line() == null)
-            return ContextResult.failed(ContextResult.ErrorCode.INVALID_INPUT, "expected path, file, line, and column");
+            return ContextResult.failed(McpErrorCode.INVALID_INPUT, "expected path, file, line, and column");
         return inspect(request.path(), () -> ContextMapper.locals(request));
     }
 
@@ -21,7 +22,7 @@ public final class ContextInspector {
             true, 
             false,
             output -> ContextResult.completed(snapshot.get()),
-            (message, output) -> ContextResult.failed(ContextResult.ErrorCode.VERIFIER_ERROR, message)
+            (message, output) -> ContextResult.failed(McpErrorCode.VERIFIER_ERROR, message)
         );
     }
 }

@@ -2,6 +2,7 @@ package liquidjava.mcp.tools.validity;
 
 import com.microsoft.z3.BoolExpr;
 import java.util.Map;
+import liquidjava.mcp.tools.McpErrorCode;
 import liquidjava.processor.context.Context;
 import liquidjava.processor.context.Variable;
 import liquidjava.rj_language.Predicate;
@@ -47,9 +48,9 @@ public final class ValidityChecker {
         } catch (SMTUnknownException e) {
             return ValidityResult.unknown(e.getMessage());
         } catch (IllegalArgumentException e) {
-            return ValidityResult.failed("INVALID_INPUT", getMessage(e));
+            return ValidityResult.failed(McpErrorCode.INVALID_INPUT, getMessage(e));
         } catch (Exception | LinkageError e) {
-            return ValidityResult.failed("VERIFIER_ERROR", getMessage(e));
+            return ValidityResult.failed(McpErrorCode.VERIFIER_ERROR, getMessage(e));
         }
     }
 

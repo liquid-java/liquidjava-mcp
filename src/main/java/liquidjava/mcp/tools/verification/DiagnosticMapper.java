@@ -21,7 +21,7 @@ final class DiagnosticMapper {
     public static Map<String, Object> map(LJDiagnostic diagnostic) {
         Map<String, Object> result = new LinkedHashMap<>();
         put(result, "type", diagnostic.getClass().getSimpleName());
-        put(result, "severity", diagnostic instanceof LJError ? "error" : "warning");
+        put(result, "severity", severity(diagnostic).wireValue());
         put(result, "message", diagnostic.getMessage());
         put(result, "location", Utils.mapPosition(diagnostic.getPosition()));
         put(result, "declarationLocation", Utils.mapPosition(diagnostic.getDeclarationPosition()));
@@ -89,5 +89,18 @@ final class DiagnosticMapper {
 
     private static void put(Map<String, Object> result, String key, Object value) {
         if (value != null) result.put(key, value);
+    }
+
+    private static Severity severity(LJDiagnostic diagnostic) {
+        return diagnostic instanceof LJError ? Severity.ERROR : Severity.WARNING;
+    }
+
+    private enum Severity {
+        ERROR,
+        WARNING;
+
+        private String wireValue() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
     }
 }

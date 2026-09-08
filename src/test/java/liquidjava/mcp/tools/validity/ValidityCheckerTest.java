@@ -3,6 +3,7 @@ package liquidjava.mcp.tools.validity;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.Map;
+import liquidjava.mcp.tools.McpErrorCode;
 import liquidjava.processor.context.Context;
 import liquidjava.rj_language.Predicate;
 import liquidjava.smt.SMTEvaluator;
@@ -33,6 +34,6 @@ class ValidityCheckerTest {
                 throw new UnsatisfiedLinkError("native solver unavailable");
             }
         });
-        assertEquals(ValidityResult.failed("VERIFIER_ERROR", "native solver unavailable"), checker.check(request));
+        assertEquals(ValidityResult.failed(McpErrorCode.VERIFIER_ERROR, "native solver unavailable"), checker.check(request));
     }
 }

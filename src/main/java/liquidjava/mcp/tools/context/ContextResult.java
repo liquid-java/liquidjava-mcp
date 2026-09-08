@@ -1,6 +1,7 @@
 package liquidjava.mcp.tools.context;
 
 import java.util.Map;
+import liquidjava.mcp.tools.McpErrorCode;
 
 public record ContextResult(Map<String, Object> context, Failure error) {
     public ContextResult {
@@ -11,11 +12,9 @@ public record ContextResult(Map<String, Object> context, Failure error) {
         return new ContextResult(context, null);
     }
 
-    public static ContextResult failed(ErrorCode code, String message) {
+    public static ContextResult failed(McpErrorCode code, String message) {
         return new ContextResult(Map.of(), new Failure(code, message));
     }
 
-    public enum ErrorCode { INVALID_INPUT, VERIFIER_ERROR }
-
-    public record Failure(ErrorCode code, String message) {}
+    public record Failure(McpErrorCode code, String message) {}
 }

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import liquidjava.api.CommandLineLauncher;
+import liquidjava.mcp.tools.McpErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -129,7 +130,7 @@ class LiquidJavaVerifierTest {
                 if (name.equals("duplicate")) {
                     assertFalse(result.success());
                     assertNotNull(result.error(), result.toString());
-                    assertEquals(VerifyResult.ErrorCode.VERIFIER_ERROR, result.error().code());
+                    assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
                     assertTrue(result.output().startsWith("Running LiquidJava on:"));
                     assertTrue(errors.toString(StandardCharsets.UTF_8).contains("spoon."));
                     assertFalse(result.output().contains("\tat "));
