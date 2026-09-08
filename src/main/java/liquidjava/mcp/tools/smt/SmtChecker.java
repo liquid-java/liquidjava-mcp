@@ -1,8 +1,10 @@
-package liquidjava.mcp.tools.validity;
+package liquidjava.mcp.tools.smt;
 
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Expr;
+import com.microsoft.z3.Model;
+import com.microsoft.z3.Solver;
 import java.util.Map;
-
 import liquidjava.mcp.tools.McpErrorCode;
 import liquidjava.processor.context.Context;
 import liquidjava.processor.context.Variable;
@@ -13,45 +15,46 @@ import liquidjava.rj_language.ast.FunctionInvocation;
 import liquidjava.rj_language.ast.Var;
 import liquidjava.rj_language.parsing.RefinementsParser;
 import liquidjava.smt.ExpressionToZ3Visitor;
-import liquidjava.smt.SMTEvaluator;
-import liquidjava.smt.SMTResult;
 import liquidjava.smt.TranslatorToZ3;
 import spoon.Launcher;
 import spoon.reflect.factory.Factory;
 
-public final class ValidityChecker {
-    private final SMTEvaluator evaluator;
+public final class SmtChecker {
 
-    public ValidityChecker() {
-        this(new SMTEvaluator());
-    }
-
-    ValidityChecker(SMTEvaluator evaluator) {
-        this.evaluator = evaluator;
-    }
-
-    public ValidityResult check(ValidityRequest request) {
+    public SmtResult check(SmtRequest request) {
         try {
-            Context context = Context.create();
-            Factory factory = new Launcher().getFactory();
-            request.variables().forEach((name, type) -> 
-                context.addVarToContext(new Variable(name, factory.Type().createReference(type), new Predicate()))
-            );
-            Predicate assumptions = new Predicate();
-            Predicate conclusion;
+            Context context = createContext(request.variables());
+            Predicate constraints = new Predicate();
             try (TranslatorToZ3 translator = new TranslatorToZ3(context)) {
                 ExpressionToZ3Visitor visitor = new ExpressionToZ3Visitor(translator);
-                for (String text : request.assumptions())
-                    assumptions = Predicate.createConjunction(assumptions, parse(text, request.variables(), visitor));
-                conclusion = parse(request.conclusion(), request.variables(), visitor);
+                for (String text : request.constraints())
+                    constraints = Predicate.createConjunction(constraints, parse(text, request.variables(), visitor));
+
+                Expr<?> expression = constraints.getExpression().accept(visitor);
+                Solver solver = translator.makeSolverForExpression(expression);
+                return switch (solver.check()) {
+                    case SATISFIABLE -> {
+                        Model model = solver.getModel();
+                        yield SmtResult.sat(translator.getCounterexample(model));
+                    }
+                    case UNSATISFIABLE -> SmtResult.unsat();
+                    case UNKNOWN -> SmtResult.unknown();
+                };
             }
-            SMTResult result = evaluator.verifySubtype(assumptions, conclusion, context, true);
-            return result.isOk() ? ValidityResult.valid() : ValidityResult.invalid(result.getCounterexample());
         } catch (IllegalArgumentException e) {
-            return ValidityResult.failed(McpErrorCode.INVALID_INPUT, getMessage(e));
+            return SmtResult.failed(McpErrorCode.INVALID_INPUT, getMessage(e));
         } catch (Exception | LinkageError e) {
-            return ValidityResult.failed(McpErrorCode.VERIFIER_ERROR, getMessage(e));
+            return SmtResult.failed(McpErrorCode.VERIFIER_ERROR, getMessage(e));
         }
+    }
+
+    private static Context createContext(Map<String, String> variables) {
+        Context context = Context.create();
+        Factory factory = new Launcher().getFactory();
+        variables.forEach((name, type) ->
+            context.addVarToContext(new Variable(name, factory.Type().createReference(type), new Predicate()))
+        );
+        return context;
     }
 
     private static Predicate parse(String text, Map<String, String> variables, ExpressionToZ3Visitor visitor) {

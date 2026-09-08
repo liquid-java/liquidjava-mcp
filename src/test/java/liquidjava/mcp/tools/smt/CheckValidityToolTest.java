@@ -1,4 +1,4 @@
-package liquidjava.mcp.tools.validity;
+package liquidjava.mcp.tools.smt;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -80,6 +80,16 @@ class CheckValidityToolTest {
             assertTrue(McpJsonDefaults.getSchemaValidator().validate(
                     stub.specification().tool().outputSchema(), result.structuredContent()).valid());
         }
+    }
+
+    @Test
+    void serializesUnknownSolverResults() {
+        var stub = new CheckValidityTool(request -> ValidityResult.unknown(), McpJsonDefaults.getMapper());
+        var result = stub.call(query(Map.of(), List.of(), "true"));
+        assertFalse(result.isError());
+        assertEquals("unknown", ((Map<?, ?>) result.structuredContent()).get("status"));
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(
+                stub.specification().tool().outputSchema(), result.structuredContent()).valid());
     }
 
     @Test

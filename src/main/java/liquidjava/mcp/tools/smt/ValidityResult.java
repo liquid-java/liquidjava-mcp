@@ -1,4 +1,4 @@
-package liquidjava.mcp.tools.validity;
+package liquidjava.mcp.tools.smt;
 
 import java.util.List;
 import java.util.Map;
@@ -16,13 +16,22 @@ public record ValidityResult(Status status, List<Map<String, String>> counterexa
         return new ValidityResult(Status.INVALID, assignments, null);
     }
 
+    public static ValidityResult invalid(List<Map<String, String>> counterexample) {
+        return new ValidityResult(Status.INVALID, counterexample, null);
+    }
+
+    public static ValidityResult unknown() {
+        return new ValidityResult(Status.UNKNOWN, null, null);
+    }
+
     public static ValidityResult failed(McpErrorCode code, String message) {
         return new ValidityResult(null, null, new Failure(code, message));
     }
 
     public enum Status {
         VALID,
-        INVALID;
+        INVALID,
+        UNKNOWN;
 
         public String wireValue() {
             return name().toLowerCase(java.util.Locale.ROOT);

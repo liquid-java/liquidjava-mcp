@@ -59,11 +59,12 @@
   "outputSchema": {
     "type": "object",
     "properties": {
-      "status": {
-        "enum": [
+          "status": {
+            "enum": [
           "valid",
-          "invalid"
-        ]
+          "invalid",
+          "unknown"
+            ]
       },
       "counterexample": {
         "type": "array",
@@ -142,6 +143,30 @@
         ],
         "not": {
           "anyOf": [
+            {
+              "required": [
+                "error"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "properties": {
+          "status": {
+            "const": "unknown"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "counterexample"
+              ]
+            },
             {
               "required": [
                 "error"

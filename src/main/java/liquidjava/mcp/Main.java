@@ -8,8 +8,10 @@ import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import java.io.PrintStream;
 import liquidjava.mcp.tools.verification.VerifyTool;
-import liquidjava.mcp.tools.validity.CheckValidityTool;
-import liquidjava.mcp.tools.validity.ValidityChecker;
+import liquidjava.mcp.tools.smt.CheckSatisfiabilityTool;
+import liquidjava.mcp.tools.smt.CheckValidityTool;
+import liquidjava.mcp.tools.smt.SmtChecker;
+import liquidjava.mcp.tools.smt.ValidityChecker;
 import liquidjava.mcp.tools.context.GetLocalsTool;
 import liquidjava.mcp.tools.context.GetGlobalsTool;
 import liquidjava.mcp.tools.context.GetContractsTool;
@@ -39,6 +41,7 @@ public final class Main {
                     new GetGlobalsTool(inspector, mapper).specification(),
                     new GetContractsTool(inspector, mapper).specification(),
                     new CheckValidityTool(new ValidityChecker()::check, mapper).specification(),
+                    new CheckSatisfiabilityTool(new SmtChecker()::check, mapper).specification(),
                     new GetStateMachineTool(mapper).specification()
                 )
                 .build();

@@ -1,4 +1,4 @@
-package liquidjava.mcp.tools.validity;
+package liquidjava.mcp.tools.smt;
 
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -22,7 +22,7 @@ public final class CheckValidityTool extends AbstractMcpTool {
             Uses LiquidJava's solver semantics.
             Does not support ghost functions, states, aliases, source constants, or implicit bindings.
             Empty assumptions mean true, while contradictory assumptions make every conclusion valid.
-            Returns `status` valid or invalid (with counterexample assignments).
+            Returns `status` valid, invalid, or unknown (with counterexample assignments for invalid results).
         """, jsonMapper);
         this.checker = checker;
     }

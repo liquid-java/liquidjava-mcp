@@ -34,7 +34,8 @@ Build the project with `mvn package` and then point your MCP client at the resul
 | `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file?`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, `file?` | `aliases`, `ghosts`, `states` |
 | `get_contracts` | Inspect method and constructor contracts | `path`, `className?`, `signature?` | `contracts` (qualified signature, parameters, return refinement, state transitions, location) |
-| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid` or `invalid`), `counterexample` |
+| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`, `invalid`, or `unknown`), `counterexample` (for invalid results)|
+| `check_satisfiability` | Check if constraints are satisfiable via the solver | `variables`, `constraints` | `status` (`sat`, `unsat`, or `unknown`), `assignment` (for satisfiable results) |
 | `get_state_machine` | Parse a Java file's LiquidJava typestate protocol | `path` | `stateMachine` with states and transitions |
 
 The `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output. Cancellation requests an interrupt; if the verifier ignores it, subsequent analyses wait until it exits to protect shared state. Analyses cancelled before completion are not cached.
@@ -306,7 +307,7 @@ Does not support ghost functions, aliases, source constants, and implicit receiv
 
 **Input:** `variables` (map of names to types), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
 
-**Output:** `status` (`valid` or `invalid`). Invalid results include a `counterexample`.
+**Output:** `status` (`valid`, `invalid`, or `unknown`). Invalid results include a `counterexample`.
 
 ```json
 {
@@ -320,6 +321,28 @@ Does not support ghost functions, aliases, source constants, and implicit receiv
 {
   "status": "invalid",
   "counterexample": [{"variable": "x", "value": "0"}]
+}
+```
+
+### `check_satisfiability`
+
+Checks whether custom constraints have a satisfying assignment using LiquidJava's solver. It returns `sat`, `unsat`, or `unknown`; `sat` results include the solver's assignment when available.
+
+**Input:** `variables` (map of names to types) and `constraints` (array of boolean predicate strings).
+
+**Output:** `status` (`sat`, `unsat`, or `unknown`). Satisfiable results include an `assignment`.
+
+```json
+{
+  "variables": {"x": "int"},
+  "constraints": ["x > 0", "x < 2"]
+}
+```
+
+```json
+{
+  "status": "sat",
+  "assignment": [{"variable": "x", "value": "1"}]
 }
 ```
 
