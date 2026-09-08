@@ -13,7 +13,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
-abstract class AbstractMcpTool {
+/**
+ * Provides the common MCP lifecycle for LiquidJava tools.
+ */
+public abstract class AbstractMcpTool {
     private final SyncToolSpecification specification;
     private final McpJsonMapper jsonMapper;
 

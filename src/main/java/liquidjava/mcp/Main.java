@@ -7,14 +7,14 @@ import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import java.io.PrintStream;
-import liquidjava.mcp.tools.VerifyTool;
-import liquidjava.mcp.tools.CheckValidityTool;
-import liquidjava.mcp.validity.ValidityChecker;
-import liquidjava.mcp.tools.GetLocalsTool;
-import liquidjava.mcp.tools.GetGlobalsTool;
-import liquidjava.mcp.tools.GetDiagnosticsTool;
-import liquidjava.mcp.verification.LiquidJavaVerifier;
-import liquidjava.mcp.context.ContextInspector;
+import liquidjava.mcp.tools.verification.VerifyTool;
+import liquidjava.mcp.tools.validity.CheckValidityTool;
+import liquidjava.mcp.tools.validity.ValidityChecker;
+import liquidjava.mcp.tools.context.GetLocalsTool;
+import liquidjava.mcp.tools.context.GetGlobalsTool;
+import liquidjava.mcp.tools.verification.GetDiagnosticsTool;
+import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
+import liquidjava.mcp.tools.context.ContextInspector;
 
 public final class Main {
     private Main() {}
