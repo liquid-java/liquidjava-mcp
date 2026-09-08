@@ -19,7 +19,6 @@ public final class ContextInspector {
     private ContextResult inspect(String path, Supplier<Map<String, Object>> snapshot) {
         return LiquidJavaRunner.run(
             path,
-            true, 
             false,
             output -> ContextResult.completed(snapshot.get()),
             (message, output) -> ContextResult.failed(McpErrorCode.VERIFIER_ERROR, message)

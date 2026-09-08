@@ -7,7 +7,7 @@ import liquidjava.mcp.tools.McpErrorCode;
 public final class LiquidJavaVerifier implements Verifier {
     @Override
     public VerifyResult verify(VerifyRequest request) {
-        return LiquidJavaRunner.run(request.path(), false, request.debug(), output -> {
+        return LiquidJavaRunner.run(request.path(), request.debug(), output -> {
             Diagnostics diagnostics = Diagnostics.getInstance();
             return VerifyResult.completed(
                 !diagnostics.foundError(), output,
