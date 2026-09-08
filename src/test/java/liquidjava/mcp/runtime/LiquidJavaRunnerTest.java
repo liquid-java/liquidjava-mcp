@@ -2,6 +2,11 @@ package liquidjava.mcp.runtime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.PrintStream;
+import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -28,6 +33,78 @@ class LiquidJavaRunnerTest {
         var result = new LiquidJavaVerifier().verify(new VerifyRequest(path.toString(), debug));
         assertNull(result.error(), result.toString());
         return ContextHistory.getInstance().getLocalVars().iterator().next();
+    }
+
+    @Test
+    void timeoutInterruptsAnalysisAndAllowsAnotherRun() throws Exception {
+        Path file = source();
+        PrintStream originalOut = System.out;
+        var interrupted = new CountDownLatch(1);
+        var snapshotCalled = new AtomicBoolean();
+        String result = LiquidJavaRunner.run(file.toString(), true, output -> {
+            snapshotCalled.set(true);
+            return "success";
+        }, (message, output) -> message + "\n" + output, Duration.ofSeconds(1), () -> {
+            System.out.println("partial output");
+            try {
+                new CountDownLatch(1).await();
+            } catch (InterruptedException e) {
+                interrupted.countDown();
+            }
+        });
+        assertTrue(result.contains("timed out"), result);
+        assertTrue(result.contains("partial output"), result);
+        assertTrue(interrupted.await(5, TimeUnit.SECONDS));
+        analyze(file, false);
+        assertFalse(snapshotCalled.get());
+        assertSame(originalOut, System.out);
+    }
+
+    @Test
+    void timedOutAnalysisCannotBeReusedWhenItIgnoresInterruption() throws Exception {
+        Path file = source();
+        var release = new CountDownLatch(1);
+        var snapshotCalled = new AtomicBoolean();
+        try {
+            String result = LiquidJavaRunner.run(file.toString(), false, output -> {
+                snapshotCalled.set(true);
+                return "success";
+            }, (message, output) -> message, Duration.ofSeconds(1), () -> {
+                boolean done = false;
+                while (!done) {
+                    try {
+                        release.await();
+                        done = true;
+                    } catch (InterruptedException ignored) {
+                        // simulate a verifier that ignores interruption
+                    }
+                }
+            });
+            assertTrue(result.contains("timed out"), result);
+            String queued = LiquidJavaRunner.run(file.toString(), false, output -> "success",
+                (message, output) -> message, Duration.ofMillis(50),
+                () -> fail("must not overlap the unfinished analysis"));
+            assertTrue(queued.contains("timed out"), queued);
+        } finally {
+            release.countDown();
+        }
+        analyze(file, false);
+        assertFalse(snapshotCalled.get());
+    }
+
+    @Test
+    void interruptedCallerKeepsItsInterruptFlag() throws Exception {
+        Path file = source();
+        try {
+            Thread.currentThread().interrupt();
+            String result = LiquidJavaRunner.run(file.toString(), false, output -> "success",
+                (message, output) -> message, Duration.ofSeconds(1), () -> {});
+            assertEquals("LiquidJava execution interrupted", result);
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
+        analyze(file, false);
     }
 
     @Test

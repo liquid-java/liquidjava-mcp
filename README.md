@@ -35,7 +35,7 @@ Build the project with `mvn package` and then point your MCP client at the resul
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, optional `file` | `aliases`, `ghosts`, `states` |
 | `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`/`invalid`/`unknown`), `counterexample` or `reason` |
 
-The `verify`, `get_diagnostics`, `get_locals`, and `get_globals` tools reuse cached analysis when the input path, source hash, and debug option match.
+The `verify`, `get_diagnostics`, `get_locals`, and `get_globals` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output. Cancellation requests an interrupt; if the verifier ignores it, subsequent analyses wait until it exits to protect shared state. Analyses cancelled before completion are not cached.
 
 ### `verify`
 
