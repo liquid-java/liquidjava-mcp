@@ -91,7 +91,7 @@ public final class LiquidJavaRunner {
                 String compilationWarning = "Java compilation encountered issues. Verification may be affected.";
                 if (Diagnostics.getInstance().getWarnings().stream()
                         .anyMatch(warning -> warning.getMessage().equals(compilationWarning)))
-                    return failure.apply("Analysis incomplete: " + compilationWarning, output);
+                    return failure.apply("Analysis incomplete: " + compilationWarning + "\n" + output, output);
                 T result = snapshot.apply(output);
 
                 // update cached result if the analysis key matches
