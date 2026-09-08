@@ -300,52 +300,6 @@ This includes source contracts and external refinement contracts.
 }
 ```
 
-### `check_validity`
-
-Checks whether custom assumptions imply one conclusion using LiquidJava's solver, without verifying Java files.
-Does not support ghost functions, aliases, source constants, and implicit receiver/return/old-state bindings.
-
-**Input:** `variables` (map of names to types), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
-
-**Output:** `status` (`valid`, `invalid`, or `unknown`). Invalid results include a `counterexample`.
-
-```json
-{
-  "variables": {"x": "int"},
-  "assumptions": ["x >= 0"],
-  "conclusion": "x > 0"
-}
-```
-
-```json
-{
-  "status": "invalid",
-  "counterexample": [{"variable": "x", "value": "0"}]
-}
-```
-
-### `check_satisfiability`
-
-Checks whether custom constraints have a satisfying assignment using LiquidJava's solver. It returns `sat`, `unsat`, or `unknown`; `sat` results include the solver's assignment when available.
-
-**Input:** `variables` (map of names to types) and `constraints` (array of boolean predicate strings).
-
-**Output:** `status` (`sat`, `unsat`, or `unknown`). Satisfiable results include an `assignment`.
-
-```json
-{
-  "variables": {"x": "int"},
-  "constraints": ["x > 0", "x < 2"]
-}
-```
-
-```json
-{
-  "status": "sat",
-  "assignment": [{"variable": "x", "value": "1"}]
-}
-```
-
 ### `get_state_machine`
 
 Parses a Java source file and returns the LiquidJava typestate protocol declared by its `@StateSet` and `@StateRefinement` annotations. The result describes the possible states, initial states, and method transitions. A transition's `fromCondition` and `toCondition` contain any non-state conditions such as `cond ? state1 : state2` or `cond && state1`.
@@ -391,5 +345,51 @@ Parses a Java source file and returns the LiquidJava typestate protocol declared
       }
     ]
   }
+}
+```
+
+### `check_validity`
+
+Checks whether custom assumptions imply one conclusion using LiquidJava's solver, without verifying Java files.
+Does not support ghost functions, aliases, source constants, and implicit receiver/return/old-state bindings.
+
+**Input:** `variables` (map of names to types), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
+
+**Output:** `status` (`valid`, `invalid`, or `unknown`). Invalid results include a `counterexample`.
+
+```json
+{
+  "variables": {"x": "int"},
+  "assumptions": ["x >= 0"],
+  "conclusion": "x > 0"
+}
+```
+
+```json
+{
+  "status": "invalid",
+  "counterexample": [{"variable": "x", "value": "0"}]
+}
+```
+
+### `check_satisfiability`
+
+Checks whether custom constraints have a satisfying assignment using LiquidJava's solver. It returns `sat`, `unsat`, or `unknown`; `sat` results include the solver's assignment when available.
+
+**Input:** `variables` (map of names to types) and `constraints` (array of boolean predicate strings).
+
+**Output:** `status` (`sat`, `unsat`, or `unknown`). Satisfiable results include an `assignment`.
+
+```json
+{
+  "variables": {"x": "int"},
+  "constraints": ["x > 0", "x < 2"]
+}
+```
+
+```json
+{
+  "status": "sat",
+  "assignment": [{"variable": "x", "value": "1"}]
 }
 ```
