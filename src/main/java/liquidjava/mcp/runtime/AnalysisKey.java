@@ -1,6 +1,7 @@
 package liquidjava.mcp.runtime;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -9,6 +10,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.stream.Stream;
 
 public record AnalysisKey(Path path, boolean debug, List<Source> sources) {
     private record Source(Path path, String hash) {}
@@ -17,7 +19,7 @@ public record AnalysisKey(Path path, boolean debug, List<Source> sources) {
         Path path = Path.of(input).toRealPath();
         List<Path> files;
         if (Files.isDirectory(path)) {
-            try (var paths = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
+            try (Stream<Path> paths = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
                 files = paths.filter(Files::isRegularFile)
                     .filter(file -> file.toString().endsWith(".java"))
                     .sorted().toList();
@@ -29,9 +31,9 @@ public record AnalysisKey(Path path, boolean debug, List<Source> sources) {
         }
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            var sources = new java.util.ArrayList<Source>();
+            List<Source> sources = new java.util.ArrayList<Source>();
             for (Path file : files) {
-                try (var stream = Files.newInputStream(file)) {
+                try (InputStream stream = Files.newInputStream(file)) {
                     byte[] buffer = new byte[8192];
                     int count;
                     while ((count = stream.read(buffer)) != -1) digest.update(buffer, 0, count);

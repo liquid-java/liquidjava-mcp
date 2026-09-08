@@ -2,6 +2,7 @@ package liquidjava.mcp.tools.validity;
 
 import com.microsoft.z3.BoolExpr;
 import java.util.Map;
+
 import liquidjava.mcp.tools.McpErrorCode;
 import liquidjava.processor.context.Context;
 import liquidjava.processor.context.Variable;
@@ -13,9 +14,11 @@ import liquidjava.rj_language.ast.Var;
 import liquidjava.rj_language.parsing.RefinementsParser;
 import liquidjava.smt.ExpressionToZ3Visitor;
 import liquidjava.smt.SMTEvaluator;
+import liquidjava.smt.SMTResult;
 import liquidjava.smt.SMTUnknownException;
 import liquidjava.smt.TranslatorToZ3;
 import spoon.Launcher;
+import spoon.reflect.factory.Factory;
 
 public final class ValidityChecker {
     private final SMTEvaluator evaluator;
@@ -31,19 +34,19 @@ public final class ValidityChecker {
     public ValidityResult check(ValidityRequest request) {
         try {
             Context context = Context.create();
-            var factory = new Launcher().getFactory();
+            Factory factory = new Launcher().getFactory();
             request.variables().forEach((name, type) -> 
                 context.addVarToContext(new Variable(name, factory.Type().createReference(type), new Predicate()))
             );
             Predicate assumptions = new Predicate();
             Predicate conclusion;
-            try (var translator = new TranslatorToZ3(context)) {
-                var visitor = new ExpressionToZ3Visitor(translator);
+            try (TranslatorToZ3 translator = new TranslatorToZ3(context)) {
+                ExpressionToZ3Visitor visitor = new ExpressionToZ3Visitor(translator);
                 for (String text : request.assumptions())
                     assumptions = Predicate.createConjunction(assumptions, parse(text, request.variables(), visitor));
                 conclusion = parse(request.conclusion(), request.variables(), visitor);
             }
-            var result = evaluator.verifySubtype(assumptions, conclusion, context, true);
+            SMTResult result = evaluator.verifySubtype(assumptions, conclusion, context, true);
             return result.isOk() ? ValidityResult.valid() : ValidityResult.invalid(result.getCounterexample());
         } catch (SMTUnknownException e) {
             return ValidityResult.unknown(e.getMessage());
