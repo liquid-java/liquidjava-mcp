@@ -62,8 +62,7 @@
       "status": {
         "enum": [
           "valid",
-          "invalid",
-          "unknown"
+          "invalid"
         ]
       },
       "counterexample": {
@@ -84,11 +83,6 @@
           ],
           "additionalProperties": false
         }
-      },
-      "reason": {
-        "type": "string",
-        "minLength": 1,
-        "pattern": "\\S"
       },
       "error": {
         "type": "object",
@@ -130,11 +124,6 @@
             },
             {
               "required": [
-                "reason"
-              ]
-            },
-            {
-              "required": [
                 "error"
               ]
             }
@@ -153,36 +142,6 @@
         ],
         "not": {
           "anyOf": [
-            {
-              "required": [
-                "reason"
-              ]
-            },
-            {
-              "required": [
-                "error"
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "properties": {
-          "status": {
-            "const": "unknown"
-          }
-        },
-        "required": [
-          "status",
-          "reason"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "counterexample"
-              ]
-            },
             {
               "required": [
                 "error"
@@ -205,11 +164,6 @@
             {
               "required": [
                 "counterexample"
-              ]
-            },
-            {
-              "required": [
-                "reason"
               ]
             }
           ]

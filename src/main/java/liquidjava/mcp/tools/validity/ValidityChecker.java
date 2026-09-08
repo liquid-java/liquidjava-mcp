@@ -15,7 +15,6 @@ import liquidjava.rj_language.parsing.RefinementsParser;
 import liquidjava.smt.ExpressionToZ3Visitor;
 import liquidjava.smt.SMTEvaluator;
 import liquidjava.smt.SMTResult;
-import liquidjava.smt.SMTUnknownException;
 import liquidjava.smt.TranslatorToZ3;
 import spoon.Launcher;
 import spoon.reflect.factory.Factory;
@@ -48,8 +47,6 @@ public final class ValidityChecker {
             }
             SMTResult result = evaluator.verifySubtype(assumptions, conclusion, context, true);
             return result.isOk() ? ValidityResult.valid() : ValidityResult.invalid(result.getCounterexample());
-        } catch (SMTUnknownException e) {
-            return ValidityResult.unknown(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ValidityResult.failed(McpErrorCode.INVALID_INPUT, getMessage(e));
         } catch (Exception | LinkageError e) {

@@ -33,7 +33,7 @@ Build the project with `mvn package` and then point your MCP client at the resul
 | `get_diagnostics` | Run verification, get structured/machine-readable diagnostics | `path` | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
 | `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file?`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, `file?` | `aliases`, `ghosts`, `states` |
-| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`/`invalid`/`unknown`), `counterexample` or `reason` |
+| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid` or `invalid`), `counterexample` |
 | `get_state_machine` | Parse a Java file's LiquidJava typestate protocol | `path` | `stateMachine` with states and transitions |
 
 The `verify`, `get_diagnostics`, `get_locals`, and `get_globals` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output. Cancellation requests an interrupt; if the verifier ignores it, subsequent analyses wait until it exits to protect shared state. Analyses cancelled before completion are not cached.
@@ -264,7 +264,7 @@ Does not support ghost functions, aliases, source constants, and implicit receiv
 
 **Input:** `variables` (map of names to types), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
 
-**Output:** `status` equal to `valid`, `invalid`, or `unknown`. Invalid results include a `counterexample` array (possibly empty); unknown results include the solver's `reason`.
+**Output:** `status` (`valid` or `invalid`). Invalid results include a `counterexample`.
 
 ```json
 {

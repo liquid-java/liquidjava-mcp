@@ -75,9 +75,8 @@ class CheckValidityToolTest {
     }
 
     @Test
-    void serializesUnknownAndExecutionErrors() {
-        for (var outcome : List.of(ValidityResult.unknown("incomplete theory"),
-                ValidityResult.failed(McpErrorCode.VERIFIER_ERROR, "solver unavailable"))) {
+    void serializesExecutionErrors() {
+        for (var outcome : List.of(ValidityResult.failed(McpErrorCode.VERIFIER_ERROR, "solver unavailable"))) {
             var stub = new CheckValidityTool(request -> outcome, McpJsonDefaults.getMapper());
             var result = stub.call(query(Map.of(), List.of(), "true"));
             assertEquals(outcome.error() != null, result.isError());
