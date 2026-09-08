@@ -1,22 +1,20 @@
 ---
 name: liquidjava-mcp
-description: Use the LiquidJava MCP to verify Java refinements and typestates, diagnose failures, inspect contracts, look up verification context, and query LiquidJava's solver with custom assumptions and conclusions.
+description: Use the LiquidJava MCP to verify Java refinements and typestates, diagnose failures, inspect contracts and verification context, and query the solver with custom assumptions and conclusions.
 ---
 
 # LiquidJava MCP
 
-## Overview
+LiquidJava is an additional compile-time Java type checker based on refinement types and typestates. Refinements constrain values and typestates constrain object states and call sequences. Verification checks whether the code satisfies the established refinements and states.
 
-LiquidJava is an additional compile-time type checker for Java, based on refinement types and typestates. Refinements constrain values with predicates and typestates constrain object states and method call sequences. Verification checks whether the facts established by the code imply the required refinements and state conditions.
+## Syntax
 
-- `@Refinement("predicate")` refines a variable, field, parameter, or return type
-- Predicates support comparisons, boolean operators, arithmetic operators, and conditional expressions
-- `_` refers to the value being refined, such as in return refinements and shorthand variable refinements
-- `@RefinementAlias("Name(type x) { predicate }")` defines a reusable predicate alias
-- `@StateSet({"state1", "state2"})` declares named object states for typestate protocols, represented as uninterpreted functions
-- `@StateRefinement(from="predicate", to="predicate")` describes method pre- and post-conditions for typestate transitions; predicates can refer to parameters, object states, and ghost variables
-- `@Ghost("type name")` declares a ghost variable, which is also an uninterpreted function with first parameter `this`
-- `old(this)` can be used in state refinements to refer to the receiver state before the method call (e.g. the predicate `size(this) == size(old(this)) + 1` can be used to specify that a method increments size by one)
+- `@Refinement("predicate")` refines a variable, field, parameter, or return type. Predicates support comparisons, boolean/arithmetic operators, and conditional expressions; `_` means the refined value (such as in return/shorthand refinements).
+- `@RefinementAlias("Name(type x) { predicate }")` defines a reusable predicate alias.
+- `@StateSet({"state1", "state2"})` declares named object states for typestate protocols, represented as uninterpreted functions.
+- `@StateRefinement(from="predicate", to="predicate")` specifies method pre/postconditions; predicates may refer to parameters, object states, and ghost variables.
+- `@Ghost("type name")` declares a ghost variable, an uninterpreted function whose first parameter is `this`. `ghost(this)` is equivalent to `this.ghost()` and `ghost()`.
+- `old(this)` refers to the receiver state before a call; e.g. `size(this) == size(old(this)) + 1` specifies a size increment.
 
 ## Workflow
 
@@ -39,18 +37,17 @@ LiquidJava is an additional compile-time type checker for Java, based on refinem
 | Check if assumptions imply a conclusion | `check_validity(variables, assumptions, conclusion)` | Test whether custom assumptions prove a specified conclusion. |
 | Check if constraints are satisfiable | `check_satisfiability(variables, constraints)` | Check if a set of constraints are satisfiable or detect contradictions.
 
-## Tool Behavior
+## Behavior
 
-- Verification accepts a Java source file or a directory. Directory analysis recursively verifies `.java` files.
-- The `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` tools reuse cached analysis when the input path, source hash, and debug option match.
-- Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output.
-- The runner clears its cached analysis when a source changes, a run fails, or a run is cancelled.
-- The context tools run the verification before taking their snapshot.
+- Diagnostic and context tools accept a Java file or directory. Directories recursively verify `.java` files.
+- `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` reuse cached analysis when path, source hash, and debug option match. The runner clears the cache when source changes, a run fails, or a run is cancelled.
+- Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with captured output.
+- Context tools verify before taking their snapshot.
+- Context information comes from recorded verifier history, not a reconstructed solver state.
+- Contracts include source and external refinement contracts.
 - `get_state_machine` parses the typestate protocol into a more readable format. It does not run the verification. Run it to check whether the actual code follows the protocol.
-- Local variables are derived from recorded verifier history, not a reconstructed solver state.
-- `get_contracts` includes both source contracts and external refinement contracts.
-- The `check_validity` and `check_satisfiability` tools query the solver directly and do not verify Java source code.
-- `line` and `column` parameters are one-based source coordinates.
+- `check_validity` and `check_satisfiability` query the solver directly and do not verify Java source.
+- `line` and `column` are one-based source coordinates.
 
 ## Instructions
 
