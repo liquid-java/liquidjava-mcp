@@ -30,15 +30,15 @@ Build the project with `mvn package` and then point your MCP client at the resul
 | Tool | Purpose | Input | Output |
 |---|---|---|---|
 | `verify` | Run the verification, get human-readable output (same as CLI) | `path`, `debug?` | standard LiquidJava output |
-| `get_diagnostics` | Run verification, get structured/machine-readable diagnostics | `path` | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
+| `get_diagnostics` | Run verification, get more detailed structured diagnostics | `path` | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
 | `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file?`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, `file?` | `aliases`, `ghosts`, `states` |
 | `get_contracts` | Inspect method and constructor contracts | `path`, `className?`, `signature?` | `contracts` (qualified signature, parameters, return refinement, state transitions, location) |
+| `get_state_machine` | Parse a Java file's LiquidJava typestate protocol | `path` | `stateMachine` with states and transitions |
 | `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`, `invalid`, or `unknown`), `counterexample` (for invalid results)|
 | `check_satisfiability` | Check if constraints are satisfiable via the solver | `variables`, `constraints` | `status` (`sat`, `unsat`, or `unknown`), `assignment` (for satisfiable results) |
-| `get_state_machine` | Parse a Java file's LiquidJava typestate protocol | `path` | `stateMachine` with states and transitions |
 
-The `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output. Cancellation requests an interrupt; if the verifier ignores it, subsequent analyses wait until it exits to protect shared state. Analyses cancelled before completion are not cached.
+The `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output.
 
 ### `verify`
 
