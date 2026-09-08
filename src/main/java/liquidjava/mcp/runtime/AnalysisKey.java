@@ -11,12 +11,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Stream;
+import liquidjava.mcp.utils.Utils;
 
 public record AnalysisKey(Path path, boolean debug, List<Source> sources) {
     private record Source(Path path, String hash) {}
 
     public static AnalysisKey read(String input, boolean debug) throws IOException {
-        Path path = Path.of(input).toRealPath();
+        Path path = Utils.canonicalPath(input);
         List<Path> files;
         if (Files.isDirectory(path)) {
             try (Stream<Path> paths = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
