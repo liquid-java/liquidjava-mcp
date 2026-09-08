@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.TypeRef;
-import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -31,7 +30,7 @@ class VerifyToolTest {
         assertEquals(path, received.get().path());
         assertFalse(result.isError());
         assertEquals(Map.of("success", true, "output", "Correct! Passed Verification.\n"), result.structuredContent());
-        assertEquals(result.structuredContent(), McpJsonDefaults.getMapper().readValue(((TextContent) result.content().getFirst()).text(), MAP));
+        assertTrue(result.content().isEmpty());
     }
 
     @Test
@@ -75,7 +74,7 @@ class VerifyToolTest {
         assertEquals(false, content.get("success"));
         assertEquals("Running LiquidJava on: Example.java\n", content.get("output"));
         assertEquals(Map.of("code", "VERIFIER_ERROR", "message", "parse failed"), content.get("error"));
-        assertEquals(content, McpJsonDefaults.getMapper().readValue(((TextContent) result.content().getFirst()).text(), MAP));
+        assertTrue(result.content().isEmpty());
     }
 
     @Test

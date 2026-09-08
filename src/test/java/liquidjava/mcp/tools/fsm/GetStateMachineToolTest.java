@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.TypeRef;
-import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -32,8 +31,7 @@ class GetStateMachineToolTest {
         assertNull(transition.get("fromCondition"));
         assertNull(transition.get("toCondition"));
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.specification().tool().outputSchema(), content).valid());
-        assertEquals(content, McpJsonDefaults.getMapper().readValue(
-            ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
+        assertTrue(result.content().isEmpty());
     }
 
     @Test

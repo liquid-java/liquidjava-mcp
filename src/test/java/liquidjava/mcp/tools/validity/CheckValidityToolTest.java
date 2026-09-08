@@ -3,8 +3,6 @@ package liquidjava.mcp.tools.validity;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
-import io.modelcontextprotocol.json.TypeRef;
-import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import java.util.List;
 import java.util.Map;
 import liquidjava.mcp.tools.McpErrorCode;
@@ -24,8 +22,7 @@ class CheckValidityToolTest {
         var content = (Map<?, ?>) result.structuredContent();
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(
                 tool.specification().tool().outputSchema(), content).valid(), content.toString());
-        assertEquals(content, McpJsonDefaults.getMapper().readValue(
-                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
+        assertTrue(result.content().isEmpty());
         return content;
     }
 

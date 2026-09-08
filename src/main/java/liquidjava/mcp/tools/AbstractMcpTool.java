@@ -52,15 +52,10 @@ public abstract class AbstractMcpTool {
     }
 
     protected final CallToolResult result(Map<String, Object> content, boolean error) {
-        try {
-            return CallToolResult.builder()
-                .structuredContent(content)
-                .addTextContent(jsonMapper.writeValueAsString(content))
-                .isError(error)
-                .build();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Could not serialize tool result", e);
-        }
+        return CallToolResult.builder()
+            .structuredContent(content)
+            .isError(error)
+            .build();
     }
 
     private record Schemas(Map<String, Object> inputSchema, Map<String, Object> outputSchema) {

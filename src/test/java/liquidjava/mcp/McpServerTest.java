@@ -7,9 +7,7 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.McpJsonDefaults;
-import io.modelcontextprotocol.json.TypeRef;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
-import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -49,9 +47,6 @@ class McpServerTest {
         assertEquals(true, content.get("success"));
         assertTrue(((String) content.get("output")).contains("Correct! Passed Verification."));
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tools.getFirst().outputSchema(), content).valid());
-        assertEquals(1, result.content().size());
-        assertEquals(content, McpJsonDefaults.getMapper().readValue(
-                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
     }
 
     @Test
@@ -63,8 +58,6 @@ class McpServerTest {
         assertEquals(false, content.get("success"));
         assertTrue(((String) content.get("output")).contains("[SMT]"));
         assertTrue(((String) content.get("output")).contains("Refinement Error"));
-        assertEquals(content, McpJsonDefaults.getMapper().readValue(
-                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
 
         var quiet = client.callTool(verifyRequest("Valid.java"));
         assertFalse(quiet.isError());
@@ -103,8 +96,6 @@ class McpServerTest {
         assertEquals("RefinementError", diagnostic.get("type"));
         assertNotNull(diagnostic.get("counterexample"));
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-        assertEquals(content, McpJsonDefaults.getMapper().readValue(
-                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
         var invalid = client.callTool(new CallToolRequest("get_diagnostics", Map.of()));
         assertTrue(invalid.isError());
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
@@ -125,8 +116,6 @@ class McpServerTest {
             assertFalse(content.containsKey("errors"));
             assertFalse(content.containsKey("warnings"));
             assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-            assertEquals(content, McpJsonDefaults.getMapper().readValue(
-                    ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
             if (name.equals("get_locals")) {
                 var variables = (List<Map<String, Object>>) content.get("variables");
                 assertTrue(variables.stream().anyMatch(v -> v.get("name").equals("input")));
@@ -157,8 +146,6 @@ class McpServerTest {
         assertEquals("invalid", content.get("status"));
         assertEquals(List.of(Map.of("variable", "x", "value", "0")), content.get("counterexample"));
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-        assertEquals(content, McpJsonDefaults.getMapper().readValue(
-                ((TextContent) result.content().getFirst()).text(), new TypeRef<Map<String, Object>>() {}));
         var invalid = client.callTool(new CallToolRequest("check_validity", Map.of()));
         assertTrue(invalid.isError());
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
