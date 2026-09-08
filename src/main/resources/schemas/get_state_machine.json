@@ -1,0 +1,73 @@
+{
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S",
+        "description": "Java source file whose LiquidJava state machine should be returned."
+      }
+    },
+    "required": ["path"],
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "stateMachine": {
+        "type": ["object", "null"],
+        "properties": {
+          "className": {"type": "string"},
+          "states": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "initialTransitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "to": {"type": "string"},
+                "toCondition": {"type": ["string", "null"]}
+              },
+              "required": ["to", "toCondition"],
+              "additionalProperties": false
+            }
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {"type": "string"},
+                "to": {"type": "string"},
+                "label": {"type": "string"},
+                "fromCondition": {"type": ["string", "null"]},
+                "toCondition": {"type": ["string", "null"]}
+              },
+              "required": ["from", "to", "label", "fromCondition", "toCondition"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["className", "states", "initialTransitions", "transitions"],
+        "additionalProperties": false
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["INVALID_INPUT", "VERIFIER_ERROR"]
+          },
+          "message": {"type": "string"}
+        },
+        "required": ["code", "message"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["stateMachine"],
+    "additionalProperties": false
+  }
+}

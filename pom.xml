@@ -43,6 +43,11 @@
       <version>0.0.32</version>
     </dependency>
     <dependency>
+      <groupId>io.github.liquid-java</groupId>
+      <artifactId>liquidjava-fsm</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>5.11.4</version>

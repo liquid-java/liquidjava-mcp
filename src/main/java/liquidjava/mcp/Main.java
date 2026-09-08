@@ -15,6 +15,7 @@ import liquidjava.mcp.tools.context.GetGlobalsTool;
 import liquidjava.mcp.tools.verification.GetDiagnosticsTool;
 import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
 import liquidjava.mcp.tools.context.ContextInspector;
+import liquidjava.mcp.tools.fsm.GetStateMachineTool;
 
 public final class Main {
     private Main() {}
@@ -35,7 +36,8 @@ public final class Main {
                     new GetDiagnosticsTool(verifier, mapper).specification(),
                     new GetLocalsTool(inspector, mapper).specification(),
                     new GetGlobalsTool(inspector, mapper).specification(),
-                    new CheckValidityTool(new ValidityChecker()::check, mapper).specification()
+                    new CheckValidityTool(new ValidityChecker()::check, mapper).specification(),
+                    new GetStateMachineTool(mapper).specification()
                 )
                 .build();
         Runtime.getRuntime().addShutdownHook(new Thread(server::close, "mcp-shutdown"));

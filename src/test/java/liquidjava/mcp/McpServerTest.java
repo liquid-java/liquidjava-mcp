@@ -41,7 +41,7 @@ class McpServerTest {
     @Test
     void advertisesVerifyAndReturnsStructuredOutput() throws Exception {
         var tools = client.listTools().tools();
-        assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals", "check_validity"), tools.stream().map(tool -> tool.name()).toList());
+        assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals", "check_validity", "get_state_machine"), tools.stream().map(tool -> tool.name()).toList());
 
         var result = client.callTool(verifyRequest("Valid.java"));
         assertFalse(result.isError());
