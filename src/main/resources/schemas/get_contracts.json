@@ -1,0 +1,105 @@
+{
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S",
+        "description": "Java source file or directory to verify."
+      },
+      "className": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S",
+        "description": "Optional exact qualified target class name."
+      },
+      "signature": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S",
+        "description": "Optional exact complete qualified method or constructor signature."
+      }
+    },
+    "required": ["path"],
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "contracts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "className": {"type": "string"},
+            "signature": {"type": "string"},
+            "returnType": {"type": "string"},
+            "parameters": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "type": {"type": "string"},
+                  "refinement": {"type": "string"}
+                },
+                "required": ["name", "type", "refinement"],
+                "additionalProperties": false
+              }
+            },
+            "returnRefinement": {"type": "string"},
+            "stateTransitions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": {"type": ["string", "null"]},
+                  "to": {"type": ["string", "null"]}
+                },
+                "required": ["from", "to"],
+                "additionalProperties": false
+              }
+            },
+            "location": {
+              "type": ["object", "null"],
+              "properties": {
+                "file": {"type": "string"},
+                "startLine": {"type": "integer", "minimum": 1},
+                "startColumn": {"type": "integer", "minimum": 1},
+                "endLine": {"type": "integer", "minimum": 1},
+                "endColumn": {"type": "integer", "minimum": 1}
+              },
+              "required": ["file", "startLine", "startColumn", "endLine", "endColumn"],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "className",
+            "signature",
+            "returnType",
+            "parameters",
+            "returnRefinement",
+            "stateTransitions",
+            "location"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["INVALID_INPUT", "VERIFIER_ERROR"]
+          },
+          "message": {"type": "string"}
+        },
+        "required": ["code", "message"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["contracts"],
+    "additionalProperties": false
+  }
+}

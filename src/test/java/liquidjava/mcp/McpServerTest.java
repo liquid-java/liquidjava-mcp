@@ -39,7 +39,7 @@ class McpServerTest {
     @Test
     void advertisesVerifyAndReturnsStructuredOutput() throws Exception {
         var tools = client.listTools().tools();
-        assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals", "check_validity", "get_state_machine"), tools.stream().map(tool -> tool.name()).toList());
+        assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals", "get_contracts", "check_validity", "get_state_machine"), tools.stream().map(tool -> tool.name()).toList());
 
         var result = client.callTool(verifyRequest("Valid.java"));
         assertFalse(result.isError());
@@ -130,6 +130,24 @@ class McpServerTest {
             assertTrue(invalid.isError());
             assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
         }
+    }
+
+    @Test
+    void returnsContractsOverStdio() {
+        var tool = client.listTools().tools().stream()
+                .filter(candidate -> candidate.name().equals("get_contracts")).findFirst().orElseThrow();
+        String path = Path.of("src/test/resources/examples/Contracts.java").toAbsolutePath().toString();
+
+        var result = client.callTool(new CallToolRequest("get_contracts", Map.of(
+                "path", path, "signature", "examples.Contracts.increment(int)")));
+        assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(1, ((List<?>) content.get("contracts")).size());
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
+
+        var invalid = client.callTool(new CallToolRequest("get_contracts", Map.of()));
+        assertTrue(invalid.isError());
+        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
     }
 
     @Test

@@ -12,6 +12,7 @@ import liquidjava.mcp.tools.validity.CheckValidityTool;
 import liquidjava.mcp.tools.validity.ValidityChecker;
 import liquidjava.mcp.tools.context.GetLocalsTool;
 import liquidjava.mcp.tools.context.GetGlobalsTool;
+import liquidjava.mcp.tools.context.GetContractsTool;
 import liquidjava.mcp.tools.verification.GetDiagnosticsTool;
 import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
 import liquidjava.mcp.tools.context.ContextInspector;
@@ -36,6 +37,7 @@ public final class Main {
                     new GetDiagnosticsTool(verifier, mapper).specification(),
                     new GetLocalsTool(inspector, mapper).specification(),
                     new GetGlobalsTool(inspector, mapper).specification(),
+                    new GetContractsTool(inspector, mapper).specification(),
                     new CheckValidityTool(new ValidityChecker()::check, mapper).specification(),
                     new GetStateMachineTool(mapper).specification()
                 )

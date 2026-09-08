@@ -1,5 +1,6 @@
 package liquidjava.mcp.tools.context;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,7 +12,9 @@ import liquidjava.processor.context.Context;
 import liquidjava.processor.context.ContextHistory;
 import liquidjava.processor.context.GhostState;
 import liquidjava.processor.context.GhostFunction;
+import liquidjava.processor.context.RefinedFunction;
 import liquidjava.processor.context.RefinedVariable;
+import liquidjava.processor.context.Variable;
 import liquidjava.rj_language.ast.formatter.VariableFormatter;
 import spoon.reflect.cu.SourcePosition;
 
@@ -28,9 +31,8 @@ final class ContextMapper {
         Range cursor = new Range(request.line(), request.column(), request.line(), request.column());
         List<Map<String, Object>> variables = history.getLocalVars().stream()
             .filter(variable -> visible(variable, request.file(), cursor, scopes))
-            .sorted(Comparator.comparingInt((RefinedVariable variable) ->
-                        variable.getPlacementInCode().getPosition().getSourceStart())
-                    .thenComparing(RefinedVariable::getName))
+            .sorted(Comparator.comparingInt((RefinedVariable variable) -> variable.getPlacementInCode().getPosition().getSourceStart())
+            .thenComparing(RefinedVariable::getName))
             .map(ContextMapper::variable)
             .distinct()
             .toList();
@@ -44,6 +46,20 @@ final class ContextMapper {
             "ghosts", ghosts(context, request.file()),
             "states", states(context, request.file())
         );
+    }
+
+    static Map<String, Object> contracts(ContractRequest request) {
+        Context context = Context.getInstance();
+        List<Map<String, Object>> contracts = context.getCtxFunctions().stream()
+            .filter(function -> request.className() == null || request.className().equals(function.getTargetClass()))
+            .filter(function -> request.signature() == null || request.signature().equals(function.getSignature()))
+            .sorted(Comparator
+                .comparing(RefinedFunction::getSignature, Comparator.nullsFirst(String::compareTo))
+                .thenComparing(ContextMapper::contractLocation)
+            )
+            .map(ContextMapper::contract)
+            .toList();
+        return Map.of("contracts", contracts);
     }
 
     private static List<Map<String, Object>> aliases(Context context) {
@@ -121,6 +137,39 @@ final class ContextMapper {
             if (state.getFile() != null) result.put("file", state.getFile());
         }
         return Map.copyOf(result);
+    }
+
+    private static Map<String, Object> contract(RefinedFunction function) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("className", function.getTargetClass());
+        result.put("signature", function.getSignature());
+        result.put("returnType", function.getType().toString());
+        result.put("parameters", function.getArguments().stream().map(ContextMapper::contractParameter).toList());
+        result.put("returnRefinement", function.getRefReturn().toString());
+        result.put("stateTransitions", function.getAllStates().stream().map(ContextMapper::stateTransition).toList());
+        result.put("location", function.getPlacementInCode() == null ? null : Utils.mapPosition(function.getPlacementInCode().getPosition()));
+        return Collections.unmodifiableMap(result);
+    }
+
+    private static Map<String, Object> contractParameter(Variable parameter) {
+        return Map.of(
+            "name", parameter.getName(),
+            "type", parameter.getType().toString(),
+            "refinement", parameter.getMainRefinement().toString()
+        );
+    }
+
+    private static Map<String, Object> stateTransition(liquidjava.processor.context.ObjectState state) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("from", state.hasFrom() ? state.getFrom().toString() : null);
+        result.put("to", state.hasTo() ? state.getTo().toString() : null);
+        return Collections.unmodifiableMap(result);
+    }
+
+    private static String contractLocation(RefinedFunction function) {
+        if (function.getPlacementInCode() == null || function.getPlacementInCode().getPosition() == null)
+            return "";
+        return function.getPlacementInCode().getPosition().toString();
     }
 
 }

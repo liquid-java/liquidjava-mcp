@@ -16,6 +16,10 @@ public final class ContextInspector {
         return inspect(request.path(), () -> ContextMapper.globals(request));
     }
 
+    public ContextResult getContracts(ContractRequest request) {
+        return inspect(request.path(), () -> ContextMapper.contracts(request));
+    }
+
     private ContextResult inspect(String path, Supplier<Map<String, Object>> snapshot) {
         return LiquidJavaRunner.run(
             path,

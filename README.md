@@ -33,10 +33,11 @@ Build the project with `mvn package` and then point your MCP client at the resul
 | `get_diagnostics` | Run verification, get structured/machine-readable diagnostics | `path` | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
 | `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file?`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, `file?` | `aliases`, `ghosts`, `states` |
+| `get_contracts` | Inspect method and constructor contracts | `path`, `className?`, `signature?` | `contracts` (qualified signature, parameters, return refinement, state transitions, location) |
 | `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid` or `invalid`), `counterexample` |
 | `get_state_machine` | Parse a Java file's LiquidJava typestate protocol | `path` | `stateMachine` with states and transitions |
 
-The `verify`, `get_diagnostics`, `get_locals`, and `get_globals` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output. Cancellation requests an interrupt; if the verifier ignores it, subsequent analyses wait until it exits to protect shared state. Analyses cancelled before completion are not cached.
+The `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output. Cancellation requests an interrupt; if the verifier ignores it, subsequent analyses wait until it exits to protect shared state. Analyses cancelled before completion are not cached.
 
 ### `verify`
 
@@ -252,6 +253,47 @@ Provides global definitions available in the program.
       "parameterTypes": ["com.example.Example"],
       "returnType": "boolean",
       "name": "open"
+    }
+  ]
+}
+```
+
+### `get_contracts`
+
+Returns the method and constructor contracts registered during verification.
+This includes source contracts and external refinement contracts.
+
+**Input:** A `path` to the Java source file or directory to verify. `className` optionally filters by an exact qualified target class name. `signature` optionally filters by an exact complete qualified method or constructor signature, including parameter types.
+
+**Output:** Each contract includes its target class, signature, return type and refinement, refined parameters, paired state transitions, and declaration location.
+
+```json
+{
+  "path": ".../Example.java",
+  "className": "com.example.Example",
+  "signature": "com.example.Example.requirePositive(int)"
+}
+```
+
+```json
+{
+  "contracts": [
+    {
+      "className": "com.example.Example",
+      "signature": "com.example.Example.requirePositive(int)",
+      "returnType": "void",
+      "parameters": [
+        {"name": "input", "type": "int", "refinement": "input > 0"}
+      ],
+      "returnRefinement": "true",
+      "stateTransitions": [],
+      "location": {
+        "file": ".../Example.java",
+        "startLine": 10,
+        "startColumn": 5,
+        "endLine": 11,
+        "endColumn": 6
+      }
     }
   ]
 }
