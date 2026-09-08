@@ -5,7 +5,7 @@ import com.microsoft.z3.Expr;
 import com.microsoft.z3.Model;
 import com.microsoft.z3.Solver;
 import java.util.Map;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 import liquidjava.processor.context.Context;
 import liquidjava.processor.context.Variable;
 import liquidjava.rj_language.Predicate;
@@ -42,9 +42,9 @@ public final class SmtChecker {
                 };
             }
         } catch (IllegalArgumentException e) {
-            return SmtResult.failed(McpErrorCode.INVALID_INPUT, getMessage(e));
+            return SmtResult.failed(McpError.Code.INVALID_INPUT, getMessage(e));
         } catch (Exception | LinkageError e) {
-            return SmtResult.failed(McpErrorCode.VERIFIER_ERROR, getMessage(e));
+            return SmtResult.failed(McpError.Code.VERIFIER_ERROR, getMessage(e));
         }
     }
 

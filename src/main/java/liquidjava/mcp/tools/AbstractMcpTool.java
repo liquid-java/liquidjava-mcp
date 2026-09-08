@@ -73,11 +73,17 @@ public abstract class AbstractMcpTool {
         return validation.valid() ? null : validation.errorMessage();
     }
 
-    protected final void addError(Map<String, Object> content, McpErrorCode code, String message) {
-        content.put("error", Map.of("code", code.name(), "message", message));
+    protected final CallToolResult result(Map<String, Object> content) {
+        return result(content, null);
     }
 
-    protected final CallToolResult result(Map<String, Object> content, boolean error) {
+    protected final CallToolResult result(Map<String, Object> content, McpError error) {
+        if (error != null)
+            content.put("error", Map.of("code", error.code().name(), "message", error.message()));
+        return result(content, error != null);
+    }
+
+    private CallToolResult result(Map<String, Object> content, boolean error) {
         return CallToolResult.builder()
             .structuredContent(content)
             .isError(error)

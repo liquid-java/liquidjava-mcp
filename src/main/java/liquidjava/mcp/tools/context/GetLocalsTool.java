@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import liquidjava.mcp.tools.AbstractMcpTool;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
 /**
  * Exposes refined variables visible at a source position.
@@ -26,16 +26,13 @@ public final class GetLocalsTool extends AbstractMcpTool {
     public CallToolResult call(Map<String, Object> arguments) {
         return handleRequest(arguments, ContextRequest::fromPositionArguments,
             request -> toMcpResult(inspector.getLocals(request)),
-            message -> toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, message))
+            message -> toMcpResult(ContextResult.failed(McpError.Code.INVALID_INPUT, message))
         );
     }
 
     private CallToolResult toMcpResult(ContextResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("variables", result.context().getOrDefault("variables", List.of()));
-        if (result.error() != null)
-            addError(content, result.error().code(), result.error().message());
-        
-        return result(content, result.error() != null);
+        return result(content, result.error());
     }
 }

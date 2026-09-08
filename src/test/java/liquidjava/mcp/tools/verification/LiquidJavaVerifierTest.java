@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import liquidjava.api.CommandLineLauncher;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -57,7 +57,7 @@ class LiquidJavaVerifierTest {
         var result = verify(example("Malformed.java"));
         assertFalse(result.success());
         assertNotNull(result.error());
-        assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
+        assertEquals(McpError.Code.VERIFIER_ERROR, result.error().code());
         assertTrue(result.error().message().contains("Java compilation encountered issues"));
         assertTrue(result.output().contains("Java compilation encountered issues"));
     }
@@ -148,7 +148,7 @@ class LiquidJavaVerifierTest {
                 if (name.equals("duplicate")) {
                     assertFalse(result.success());
                     assertNotNull(result.error(), result.toString());
-                    assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
+                    assertEquals(McpError.Code.VERIFIER_ERROR, result.error().code());
                     assertTrue(result.output().startsWith("Running LiquidJava on:"));
                     assertTrue(errors.toString(StandardCharsets.UTF_8).contains("spoon."));
                     assertFalse(result.output().contains("\tat "));

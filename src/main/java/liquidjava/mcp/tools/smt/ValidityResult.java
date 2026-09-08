@@ -3,9 +3,9 @@ package liquidjava.mcp.tools.smt;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
-public record ValidityResult(Status status, List<Map<String, String>> counterexample, Failure error) {
+public record ValidityResult(Status status, List<Map<String, String>> counterexample, McpError error) {
     public static ValidityResult valid() {
         return new ValidityResult(Status.VALID, null, null);
     }
@@ -18,8 +18,8 @@ public record ValidityResult(Status status, List<Map<String, String>> counterexa
         return new ValidityResult(Status.UNKNOWN, null, null);
     }
 
-    public static ValidityResult failed(McpErrorCode code, String message) {
-        return new ValidityResult(null, null, new Failure(code, message));
+    public static ValidityResult failed(McpError.Code code, String message) {
+        return new ValidityResult(null, null, new McpError(code, message));
     }
 
     public enum Status {
@@ -32,5 +32,4 @@ public record ValidityResult(Status status, List<Map<String, String>> counterexa
         }
     }
 
-    public record Failure(McpErrorCode code, String message) {}
 }

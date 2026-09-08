@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import liquidjava.mcp.tools.AbstractMcpTool;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
 /**
  * Exposes aliases, ghost functions, and typestate definitions.
@@ -25,7 +25,7 @@ public final class GetGlobalsTool extends AbstractMcpTool {
     public CallToolResult call(Map<String, Object> arguments) {
         return handleRequest(arguments, ContextRequest::fromGlobalArguments,
             request -> toMcpResult(inspector.getGlobals(request)),
-            message -> toMcpResult(ContextResult.failed(McpErrorCode.INVALID_INPUT, message))
+            message -> toMcpResult(ContextResult.failed(McpError.Code.INVALID_INPUT, message))
         );
     }
 
@@ -34,9 +34,6 @@ public final class GetGlobalsTool extends AbstractMcpTool {
         content.put("aliases", result.context().getOrDefault("aliases", List.of()));
         content.put("ghosts", result.context().getOrDefault("ghosts", List.of()));
         content.put("states", result.context().getOrDefault("states", List.of()));
-        if (result.error() != null)
-            addError(content, result.error().code(), result.error().message());
-        
-        return result(content, result.error() != null);
+        return result(content, result.error());
     }
 }

@@ -10,7 +10,7 @@ import liquidjava.fsm.StateMachineInitialTransition;
 import liquidjava.fsm.StateMachineParser;
 import liquidjava.fsm.StateMachineTransition;
 import liquidjava.mcp.tools.AbstractMcpTool;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
 /**
  * Parses a Java source file for its LiquidJava state machine.
@@ -28,7 +28,7 @@ public final class GetStateMachineTool extends AbstractMcpTool {
     public CallToolResult call(Map<String, Object> arguments) {
         return handleRequest(arguments, StateMachineRequest::fromArguments,
             this::parseStateMachine,
-            inputError -> errorResult(McpErrorCode.INVALID_INPUT, inputError)
+            inputError -> errorResult(McpError.Code.INVALID_INPUT, inputError)
         );
     }
 
@@ -39,17 +39,16 @@ public final class GetStateMachineTool extends AbstractMcpTool {
 
             Map<String, Object> content = new LinkedHashMap<>();
             content.put("stateMachine", map(stateMachine));
-            return result(content, false);
+            return result(content);
         } catch (Exception e) {
-            return errorResult(McpErrorCode.VERIFIER_ERROR, message(e));
+            return errorResult(McpError.Code.VERIFIER_ERROR, message(e));
         }
     }
 
-    private CallToolResult errorResult(McpErrorCode code, String message) {
+    private CallToolResult errorResult(McpError.Code code, String message) {
         Map<String, Object> content = new LinkedHashMap<>();
-        addError(content, code, message);
         content.put("stateMachine", null);
-        return result(content, true);
+        return result(content, new McpError(code, message));
     }
 
     private static String message(Throwable error) {

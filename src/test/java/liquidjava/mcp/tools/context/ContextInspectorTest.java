@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import liquidjava.api.CommandLineLauncher;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
 import liquidjava.mcp.tools.verification.VerifyRequest;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class ContextInspectorTest {
         var request = new ContextRequest(path, path, 1, 1);
         for (var result : List.of(inspector.getLocals(request), inspector.getGlobals(request))) {
             assertNotNull(result.error(), result.toString());
-            assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
+            assertEquals(McpError.Code.VERIFIER_ERROR, result.error().code());
             assertTrue(result.error().message().contains("Java compilation encountered issues"));
             assertTrue(result.context().isEmpty());
         }
@@ -94,7 +94,7 @@ class ContextInspectorTest {
             System.setErr(capture);
             var result = inspector.getGlobals(new ContextRequest(broken.toString(), broken.toString(), null, null));
             assertNotNull(result.error());
-        assertEquals(McpErrorCode.VERIFIER_ERROR, result.error().code());
+        assertEquals(McpError.Code.VERIFIER_ERROR, result.error().code());
             assertTrue(result.context().isEmpty());
         } finally {
             System.setErr(originalErr);

@@ -5,7 +5,7 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import liquidjava.mcp.tools.AbstractMcpTool;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
 /**
  * Exposes LiquidJava verification with plain-text output.
@@ -27,7 +27,7 @@ public final class VerifyTool extends AbstractMcpTool {
     public CallToolResult call(Map<String, Object> arguments) {
         return handleRequest(arguments, VerifyRequest::fromArguments,
             request -> toMcpResult(verifier.verify(request)),
-            message -> toMcpResult(VerifyResult.failed(McpErrorCode.INVALID_INPUT, message, ""))
+            message -> toMcpResult(VerifyResult.failed(McpError.Code.INVALID_INPUT, message, ""))
         );
     }
 
@@ -35,9 +35,6 @@ public final class VerifyTool extends AbstractMcpTool {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("success", result.success());
         content.put("output", result.output());
-        if (result.error() != null)
-            addError(content, result.error().code(), result.error().message());
-        
-        return result(content, result.error() != null);
+        return result(content, result.error());
     }
 }

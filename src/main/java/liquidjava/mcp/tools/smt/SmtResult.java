@@ -3,10 +3,10 @@ package liquidjava.mcp.tools.smt;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 import liquidjava.smt.Counterexample;
 
-public record SmtResult(Status status, List<Map<String, String>> assignment, Failure error) {
+public record SmtResult(Status status, List<Map<String, String>> assignment, McpError error) {
     public static SmtResult sat(Counterexample assignment) {
         List<Map<String, String>> values = assignment.assignments().stream()
             .map(pair -> Map.of("variable", pair.first(), "value", pair.second())).toList();
@@ -21,8 +21,8 @@ public record SmtResult(Status status, List<Map<String, String>> assignment, Fai
         return new SmtResult(Status.UNKNOWN, null, null);
     }
 
-    public static SmtResult failed(McpErrorCode code, String message) {
-        return new SmtResult(null, null, new Failure(code, message));
+    public static SmtResult failed(McpError.Code code, String message) {
+        return new SmtResult(null, null, new McpError(code, message));
     }
 
     public enum Status {
@@ -35,5 +35,4 @@ public record SmtResult(Status status, List<Map<String, String>> assignment, Fai
         }
     }
 
-    public record Failure(McpErrorCode code, String message) {}
 }

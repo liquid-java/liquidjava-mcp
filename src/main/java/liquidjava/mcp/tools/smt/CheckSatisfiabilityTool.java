@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 import liquidjava.mcp.tools.AbstractMcpTool;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
 /** Checks whether a set of refinement predicates has a satisfying assignment. */
 public final class CheckSatisfiabilityTool extends AbstractMcpTool {
@@ -27,7 +27,7 @@ public final class CheckSatisfiabilityTool extends AbstractMcpTool {
     public CallToolResult call(Map<String, Object> arguments) {
         return handleRequest(arguments, SmtRequest::fromArguments,
             request -> toMcpResult(checker.apply(request)),
-            message -> toMcpResult(SmtResult.failed(McpErrorCode.INVALID_INPUT, message))
+            message -> toMcpResult(SmtResult.failed(McpError.Code.INVALID_INPUT, message))
         );
     }
 
@@ -35,9 +35,6 @@ public final class CheckSatisfiabilityTool extends AbstractMcpTool {
         Map<String, Object> content = new LinkedHashMap<>();
         if (result.status() != null) content.put("status", result.status().wireValue());
         if (result.assignment() != null) content.put("assignment", result.assignment());
-        if (result.error() != null)
-            addError(content, result.error().code(), result.error().message());
-        
-        return result(content, result.error() != null);
+        return result(content, result.error());
     }
 }

@@ -1,9 +1,9 @@
 package liquidjava.mcp.tools.context;
 
 import java.util.Map;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
-public record ContextResult(Map<String, Object> context, Failure error) {
+public record ContextResult(Map<String, Object> context, McpError error) {
     public ContextResult {
         context = Map.copyOf(context);
     }
@@ -12,9 +12,7 @@ public record ContextResult(Map<String, Object> context, Failure error) {
         return new ContextResult(context, null);
     }
 
-    public static ContextResult failed(McpErrorCode code, String message) {
-        return new ContextResult(Map.of(), new Failure(code, message));
+    public static ContextResult failed(McpError.Code code, String message) {
+        return new ContextResult(Map.of(), new McpError(code, message));
     }
-
-    public record Failure(McpErrorCode code, String message) {}
 }

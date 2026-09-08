@@ -2,7 +2,7 @@ package liquidjava.mcp.tools.verification;
 
 import liquidjava.diagnostics.Diagnostics;
 import liquidjava.mcp.runtime.LiquidJavaRunner;
-import liquidjava.mcp.tools.McpErrorCode;
+import liquidjava.mcp.tools.McpError;
 
 public final class LiquidJavaVerifier implements Verifier {
     @Override
@@ -14,6 +14,6 @@ public final class LiquidJavaVerifier implements Verifier {
                 DiagnosticMapper.snapshot(diagnostics.getErrors()),
                 DiagnosticMapper.snapshot(diagnostics.getWarnings())
             );
-        }, (message, output) -> VerifyResult.failed(McpErrorCode.VERIFIER_ERROR, message, output));
+        }, (message, output) -> VerifyResult.failed(McpError.Code.VERIFIER_ERROR, message, output));
     }
 }
