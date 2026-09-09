@@ -3,6 +3,7 @@
 A Java MCP server that exposes LiquidJava verification tools to LLM agents over stdio.
 
 It allows agents to run the LiquidJava verification, retrieve structured diagnostics, inspect the verification context, and query LiquidJava's solver with custom assumptions and conclusions.
+It also comes with a [skill](skills/liquidjava-mcp/SKILL.md) that guides agents on how and when to use the MCP tools.
 
 ## Installation
 
