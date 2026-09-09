@@ -11,7 +11,34 @@
           }
         },
         "additionalProperties": {
-          "enum": ["boolean", "short", "char", "int", "long", "float", "double"]
+          "type": "string",
+          "pattern": "^(?:[a-zA-Z_$][a-zA-Z0-9_$]*\\.)*[a-zA-Z_$][a-zA-Z0-9_$]*$"
+        }
+      },
+      "ghosts": {
+        "type": "object",
+        "description": "Uninterpreted ghost functions available to the predicates.",
+        "propertyNames": {
+          "pattern": "^(?![A-Z][a-zA-Z0-9]*$)#*[a-zA-Z_][a-zA-Z0-9_#]*$",
+          "not": {"enum": ["_", "this", "old", "true", "false"]}
+        },
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "parameterTypes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(?:[a-zA-Z_$][a-zA-Z0-9_$]*\\.)*[a-zA-Z_$][a-zA-Z0-9_$]*$"
+              }
+            },
+            "returnType": {
+              "type": "string",
+              "pattern": "^(?:[a-zA-Z_$][a-zA-Z0-9_$]*\\.)*[a-zA-Z_$][a-zA-Z0-9_$]*$"
+            }
+          },
+          "required": ["parameterTypes", "returnType"],
+          "additionalProperties": false
         }
       },
       "constraints": {
@@ -23,7 +50,7 @@
         }
       }
     },
-    "required": ["variables", "constraints"],
+    "required": ["variables", "ghosts", "constraints"],
     "additionalProperties": false
   },
   "outputSchema": {

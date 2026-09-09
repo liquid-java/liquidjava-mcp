@@ -155,7 +155,7 @@ class McpServerTest {
         var tool = client.listTools().tools().stream()
                 .filter(t -> t.name().equals("check_validity")).findFirst().orElseThrow();
         var arguments = Map.<String, Object>of("variables", Map.of("x", "int"),
-                "assumptions", List.of("x >= 0"), "conclusion", "x > 0");
+                "ghosts", Map.of(), "assumptions", List.of("x >= 0"), "conclusion", "x > 0");
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.inputSchema(), arguments).valid());
         client.callTool(verifyRequest("Valid.java"));
         var result = client.callTool(new CallToolRequest("check_validity", arguments));
@@ -175,7 +175,7 @@ class McpServerTest {
         var tool = client.listTools().tools().stream()
                 .filter(t -> t.name().equals("check_satisfiability")).findFirst().orElseThrow();
         var arguments = Map.<String, Object>of("variables", Map.of("x", "int"),
-                "constraints", List.of("x == 11"));
+                "ghosts", Map.of(), "constraints", List.of("x == 11"));
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.inputSchema(), arguments).valid());
         var result = client.callTool(new CallToolRequest("check_satisfiability", arguments));
         assertFalse(result.isError());
@@ -185,7 +185,8 @@ class McpServerTest {
         assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
 
         var unsat = client.callTool(new CallToolRequest("check_satisfiability", Map.of(
-                "variables", Map.of("x", "int"), "constraints", List.of("x > 10", "x < 5"))));
+                "variables", Map.of("x", "int"), "ghosts", Map.of(),
+                "constraints", List.of("x > 10", "x < 5"))));
         assertFalse(unsat.isError());
         assertEquals("unsat", ((Map<?, ?>) unsat.structuredContent()).get("status"));
 

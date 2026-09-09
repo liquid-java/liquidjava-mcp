@@ -34,8 +34,8 @@ LiquidJava is an additional compile-time Java type checker based on refinement t
 | `get_globals(path, file?)` | Inspect global definitions available in the program: aliases, ghosts, and states. |
 | `get_contracts(path, className?, signature?)` | Inspect method and constructor contracts, including parameter refinements, return refinements, and state transitions |
 | `get_state_machine(path)` | Understand the allowed transitions for a typestate protocol. |
-| `check_validity(variables, assumptions, conclusion)` | Check whether assumptions prove a specified conclusion. |
-| `check_satisfiability(variables, constraints)` | Check whether a set of constraints are satisfiable or detect contradictions.
+| `check_validity(variables, ghosts, assumptions, conclusion)` | Check whether assumptions prove a specified conclusion. |
+| `check_satisfiability(variables, ghosts, constraints)` | Check whether a set of constraints are satisfiable or detect contradictions. |
 
 ## Behavior
 
@@ -47,16 +47,19 @@ LiquidJava is an additional compile-time Java type checker based on refinement t
 - Contracts include source and external refinement contracts.
 - `get_state_machine` parses the typestate protocol into a more readable format. It does not run the verification. Run it to check whether the actual code follows the protocol.
 - `check_validity` and `check_satisfiability` query the solver directly and do not verify Java source.
+- Their `ghosts` input maps function names to uninterpreted function declarations containing `parameterTypes` and `returnType`.
+- `variables` and `ghosts` are required for direct solver queries, so use `{}` for either when there are none.
 - `line` and `column` are one-based source coordinates.
 
 ## Instructions
 
+- Preserve the intended contract when diagnosing failures.
 - Prefer absolute source paths.
 - Do not weaken requirements just to pass verification.
 - If the solver returns unknown or a tool returns an error, treat the result as inconclusive and not successful verification.
 - Use `check_validity` for implication questions and `check_satisfiability` for consistency/model questions.
 - If an implication passes unexpectedly, check the assumptions for contradictions using `check_satisfiability` before trusting the proof.
-- Preserve the intended contract when diagnosing failures.
+- To test typestates, use reference types as receivers for ghost functions with integer return types, such as `state1(example.File)`.
 
 ## Resources
 

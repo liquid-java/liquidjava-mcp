@@ -27,7 +27,8 @@ class CheckValidityToolTest {
     }
 
     private Map<String, Object> query(Map<String, String> variables, List<String> assumptions, String conclusion) {
-        return Map.of("variables", variables, "assumptions", assumptions, "conclusion", conclusion);
+        return Map.of("variables", variables, "ghosts", Map.of(),
+                "assumptions", assumptions, "conclusion", conclusion);
     }
 
     @Test
@@ -39,6 +40,28 @@ class CheckValidityToolTest {
         assertEquals("valid", call(query(Map.of(), List.of(), "true"), false).get("status"));
         assertEquals("invalid", call(query(Map.of(), List.of(), "false"), false).get("status"));
         assertEquals("valid", call(query(Map.of("x", "int"), List.of("x > 0", "x < 0"), "false"), false).get("status"));
+    }
+
+    @Test
+    void supportsIntegerValuedTypestateFunctions() throws Exception {
+        var arguments = Map.<String, Object>of(
+                "variables", Map.of("door", "example.Door"),
+                "ghosts", Map.of("state0", Map.of(
+                        "parameterTypes", List.of("example.Door"),
+                        "returnType", "int")),
+                "assumptions", List.of("state0(door) == 0"),
+                "conclusion", "door.state0() != 1");
+
+        assertEquals("valid", call(arguments, false).get("status"));
+
+        var emptyVariables = Map.<String, Object>of(
+                "variables", Map.of(),
+                "ghosts", Map.of("state0", Map.of(
+                        "parameterTypes", List.of("int"),
+                        "returnType", "int")),
+                "assumptions", List.of("state0(1) == 0"),
+                "conclusion", "state0(1) != 1");
+        assertEquals("valid", call(emptyVariables, false).get("status"));
     }
 
     @Test
@@ -60,9 +83,11 @@ class CheckValidityToolTest {
         }
         for (String name : List.of("", "bad name", "true", "int", "_", "this", "old", "X", "x.y"))
             call(query(Map.of(name, "int"), List.of(), "true"), true);
-        call(query(Map.of("x", "byte"), List.of(), "true"), true);
+        call(query(Map.of("x", "byte"), List.of(), "true"), false);
         call(query(Map.of(), List.of("1"), "true"), true);
         call(Map.of(), true);
+        call(Map.of("ghosts", Map.of(), "assumptions", List.of(), "conclusion", "true"), true);
+        call(Map.of("variables", Map.of(), "assumptions", List.of(), "conclusion", "true"), true);
         call(null, true);
         call(query(Map.of(), List.of(), " "), true);
         call(query(Map.of(), List.of(" "), "true"), true);
@@ -112,6 +137,13 @@ class CheckValidityToolTest {
     void doesNotLeakAcrossRequestsOrVerification() throws Exception {
         call(query(Map.of("onlyHere", "int"), List.of(), "onlyHere == onlyHere"), false);
         call(query(Map.of(), List.of(), "onlyHere == 0"), true);
+        call(Map.of(
+                "variables", Map.of("x", "int"),
+                "ghosts", Map.of("onlyHere", Map.of("parameterTypes", List.of("int"),
+                        "returnType", "int")),
+                "assumptions", List.of(),
+                "conclusion", "onlyHere(x) == onlyHere(x)"), false);
+        call(query(Map.of("x", "int"), List.of(), "onlyHere(x) == 0"), true);
         var verifier = new LiquidJavaVerifier();
         var request = VerifyRequest.fromArguments(Map.of("path", "src/test/resources/examples/Valid.java"));
         assertTrue(verifier.verify(request).success());

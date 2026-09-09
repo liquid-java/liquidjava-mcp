@@ -36,8 +36,8 @@ Build the project with `mvn package` and then point your MCP client at the resul
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, `file?` | `aliases`, `ghosts`, `states` |
 | `get_contracts` | Inspect method and constructor contracts | `path`, `className?`, `signature?` | `contracts` (qualified signature, parameters, return refinement, state transitions, location) |
 | `get_state_machine` | Parse a Java file's LiquidJava typestate protocol | `path` | `stateMachine` with states and transitions |
-| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `assumptions`, `conclusion` | `status` (`valid`, `invalid`, or `unknown`), `counterexample` (for invalid results)|
-| `check_satisfiability` | Check if constraints are satisfiable via the solver | `variables`, `constraints` | `status` (`sat`, `unsat`, or `unknown`), `assignment` (for satisfiable results) |
+| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `ghosts`, `assumptions`, `conclusion` | `status` (`valid`, `invalid`, or `unknown`), `counterexample` (for invalid results)|
+| `check_satisfiability` | Check if constraints are satisfiable via the solver | `variables`, `ghosts`, `constraints` | `status` (`sat`, `unsat`, or `unknown`), `assignment` (for satisfiable results) |
 
 The `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output.
 
@@ -361,15 +361,17 @@ Parses a Java source file and returns the LiquidJava typestate protocol declared
 ### `check_validity`
 
 Checks whether custom assumptions imply one conclusion using LiquidJava's solver, without verifying Java files.
-Does not support ghost functions, aliases, source constants, and implicit receiver/return/old-state bindings.
+Declared ghost functions are translated as LiquidJava uninterpreted functions. Aliases, source constants, and
+implicit receiver/return/old-state bindings are not supported.
 
-**Input:** `variables` (map of names to types), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
+**Input:** `variables` (map of names to primitive or reference types), `ghosts` (map of names to uninterpreted function declarations with parameter types and a return type), `assumptions` (array of boolean predicate strings), and `conclusion` (boolean predicate string).
 
 **Output:** `status` (`valid`, `invalid`, or `unknown`). Invalid results include a `counterexample`.
 
 ```json
 {
   "variables": {"x": "int"},
+  "ghosts": {},
   "assumptions": ["x >= 0"],
   "conclusion": "x > 0"
 }
@@ -386,13 +388,14 @@ Does not support ghost functions, aliases, source constants, and implicit receiv
 
 Checks whether custom constraints have a satisfying assignment using LiquidJava's solver. It returns `sat`, `unsat`, or `unknown`; `sat` results include the solver's assignment when available.
 
-**Input:** `variables` (map of names to types) and `constraints` (array of boolean predicate strings).
+**Input:** `variables` (map of names to primitive or reference types), `ghosts` (map of names to uninterpreted function declarations with parameter types and a return type), and `constraints` (array of boolean predicate strings).
 
 **Output:** `status` (`sat`, `unsat`, or `unknown`). Satisfiable results include an `assignment`.
 
 ```json
 {
   "variables": {"x": "int"},
+  "ghosts": {},
   "constraints": ["x > 0", "x < 2"]
 }
 ```
