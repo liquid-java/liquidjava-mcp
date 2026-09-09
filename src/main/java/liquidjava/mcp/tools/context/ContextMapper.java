@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import liquidjava.mcp.utils.PathUtils;
 import liquidjava.mcp.utils.Utils;
 import liquidjava.processor.context.AliasWrapper;
 import liquidjava.processor.context.Context;
@@ -24,7 +25,7 @@ final class ContextMapper {
     static Map<String, Object> locals(ContextRequest request) {
         ContextHistory history = ContextHistory.getInstance();
         List<Range> scopes = history.getFileScopes().entrySet().stream()
-            .filter(entry -> Utils.samePath(entry.getKey(), request.file()))
+            .filter(entry -> PathUtils.samePath(entry.getKey(), request.file()))
             .flatMap(entry -> entry.getValue().stream())
             .map(Range::parse)
             .toList();
@@ -73,7 +74,7 @@ final class ContextMapper {
     private static List<Map<String, Object>> ghosts(Context context, String file) {
         return context.getGhostStates().stream()
             .filter(state -> state.getParent() == null)
-            .filter(state -> file == null || state.getFile() != null && Utils.samePath(state.getFile(), file))
+            .filter(state -> file == null || state.getFile() != null && PathUtils.samePath(state.getFile(), file))
             .sorted(Comparator.comparing(GhostFunction::getQualifiedName))
             .map(ContextMapper::ghost)
             .distinct()
@@ -83,7 +84,7 @@ final class ContextMapper {
     private static List<Map<String, Object>> states(Context context, String file) {
         return context.getGhostStates().stream()
             .filter(state -> state.getParent() != null)
-            .filter(state -> file == null || state.getFile() != null && Utils.samePath(state.getFile(), file))
+            .filter(state -> file == null || state.getFile() != null && PathUtils.samePath(state.getFile(), file))
             .sorted(Comparator.comparing(GhostState::getQualifiedName))
             .map(ContextMapper::ghost)
             .toList();
@@ -93,7 +94,7 @@ final class ContextMapper {
         if (variable.getPlacementInCode() == null) return false;
         SourcePosition position = variable.getPlacementInCode().getPosition();
         if (position == null || !position.isValidPosition() || position.getFile() == null) return false;
-        if (!Utils.samePath(position.getFile().toString(), file)) return false;
+        if (!PathUtils.samePath(position.getFile().toString(), file)) return false;
 
         Range declaration = Range.from(position);
         if (!declaration.startsBefore(cursor)) return false;

@@ -1,21 +1,11 @@
 package liquidjava.mcp.tools.fsm;
 
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.util.Map;
+import liquidjava.mcp.utils.PathUtils;
 
 public record StateMachineRequest(String path) {
     public StateMachineRequest {
-        if (path == null || path.isBlank())
-            throw new IllegalArgumentException("path must be a nonblank string");
-        try {
-            Path source = Path.of(path).toAbsolutePath().normalize();
-            if (!Files.isRegularFile(source) || !source.getFileName().toString().endsWith(".java"))
-                throw new IllegalArgumentException("path must be an existing Java source file");
-        } catch (InvalidPathException e) {
-            throw new IllegalArgumentException("invalid path: " + e.getReason(), e);
-        }
+        PathUtils.requireExistingJavaFile(path, "path");
     }
 
     public static StateMachineRequest fromArguments(Map<String, Object> arguments) {

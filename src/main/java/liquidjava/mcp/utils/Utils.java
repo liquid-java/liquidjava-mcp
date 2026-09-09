@@ -1,10 +1,7 @@
 package liquidjava.mcp.utils;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.Map;
 import spoon.reflect.cu.SourcePosition;
 
@@ -22,17 +19,5 @@ public final class Utils {
 
     public static String stripAnsi(ByteArrayOutputStream bytes) {
         return Regex.ANSI_ESCAPE.matcher(bytes.toString(StandardCharsets.UTF_8)).replaceAll("");
-    }
-
-    public static Path canonicalPath(String path) throws IOException {
-        return Path.of(path).toRealPath();
-    }
-
-    public static boolean samePath(String left, String right) {
-        try {
-            return canonicalPath(left).equals(canonicalPath(right));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 }

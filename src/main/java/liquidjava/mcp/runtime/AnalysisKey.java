@@ -12,13 +12,13 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Stream;
-import liquidjava.mcp.utils.Utils;
+import liquidjava.mcp.utils.PathUtils;
 
 public record AnalysisKey(Path path, boolean debug, List<Source> sources) {
     private record Source(Path path, String hash) {}
 
     public static AnalysisKey read(String input, boolean debug) throws IOException {
-        Path path = Utils.canonicalPath(input);
+        Path path = PathUtils.canonicalPath(input);
         List<Path> files = sourceFiles(path);
         List<Source> sources = new ArrayList<>();
         for (Path file : files) {

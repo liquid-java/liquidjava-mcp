@@ -1,18 +1,11 @@
 package liquidjava.mcp.tools.verification;
 
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.util.Map;
+import liquidjava.mcp.utils.PathUtils;
 
 public record VerifyRequest(String path, boolean debug) {
     public VerifyRequest {
-        if (path == null || path.isBlank())
-            throw new IllegalArgumentException("path must be a nonblank string");
-        try {
-            Path.of(path);
-        } catch (InvalidPathException e) {
-            throw new IllegalArgumentException("invalid path: " + e.getReason(), e);
-        }
+        PathUtils.requireValid(path, "path");
     }
 
     public static VerifyRequest fromArguments(Map<String, Object> arguments) {

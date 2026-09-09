@@ -1,40 +1,17 @@
 package liquidjava.mcp.tools.context;
 
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Map;
-import liquidjava.mcp.utils.Utils;
+import liquidjava.mcp.utils.PathUtils;
 
 public record ContextRequest(String path, String file, Integer line, Integer column) {
     public ContextRequest {
-        if (path == null || path.isBlank())
-            throw new IllegalArgumentException("path must be a nonblank string");
-        Path verificationPath;
-        try {
-            verificationPath = Utils.canonicalPath(path);
-            path = verificationPath.toString();
-        } catch (InvalidPathException e) {
-            throw new IllegalArgumentException("invalid path: " + e.getReason(), e);
-        } catch (NoSuchFileException e) {
-            throw new IllegalArgumentException("The path " + path + " was not found", e);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Cannot resolve path " + path + ": " + e.getMessage(), e);
-        }
+        Path verificationPath = PathUtils.requireExisting(path);
+        path = verificationPath.toString();
 
         if (file != null) {
-            if (file.isBlank())
-                throw new IllegalArgumentException("file must be a nonblank string");
-            Path sourceFile;
-            try {
-                sourceFile = Utils.canonicalPath(file);
-            } catch (IOException e) {
-                throw new IllegalArgumentException("file must be an existing Java source file", e);
-            }
-            if (!Files.isRegularFile(sourceFile) || !sourceFile.getFileName().toString().endsWith(".java"))
-                throw new IllegalArgumentException("file must be an existing Java source file");
+            Path sourceFile = PathUtils.requireExistingJavaFile(file, "file");
             boolean belongsToPath = Files.isDirectory(verificationPath)
                     ? sourceFile.startsWith(verificationPath)
                     : sourceFile.equals(verificationPath);
