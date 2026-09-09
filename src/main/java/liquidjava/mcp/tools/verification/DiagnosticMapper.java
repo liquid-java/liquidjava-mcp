@@ -1,6 +1,8 @@
 package liquidjava.mcp.tools.verification;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -8,11 +10,14 @@ import java.util.Map;
 import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.errors.InvalidRefinementError;
 import liquidjava.diagnostics.errors.LJError;
+import liquidjava.diagnostics.errors.NotFoundError;
 import liquidjava.diagnostics.errors.RefinementError;
 import liquidjava.diagnostics.errors.StateConflictError;
 import liquidjava.diagnostics.errors.StateRefinementError;
 import liquidjava.diagnostics.errors.SyntaxError;
 import liquidjava.diagnostics.warnings.UnsatisfiableRefinementWarning;
+import liquidjava.diagnostics.warnings.ExternalClassNotFoundWarning;
+import liquidjava.diagnostics.warnings.ExternalMethodNotFoundWarning;
 import liquidjava.mcp.utils.Utils;
 import liquidjava.rj_language.Predicate;
 import liquidjava.rj_language.opt.VCSimplificationResult;
@@ -36,6 +41,7 @@ final class DiagnosticMapper {
         put(result, "refinements", getRefinements(diagnostic));
         put(result, "vc", getVC(diagnostic));
         put(result, "counterexample", getCounterexample(diagnostic));
+        put(result, "details", getDetails(diagnostic));
         return Map.copyOf(result);
     }
 
@@ -51,14 +57,14 @@ final class DiagnosticMapper {
         };
     }
 
-    private static Map<String, String> getRefinementsMap(Predicate expected,VCSimplificationResult found) {
+    private static Map<String, String> getRefinementsMap(Predicate expected, VCSimplificationResult found) {
         return Map.of(
             "expected", expected.toString(),
             "found", found.getImplication().toPredicate().toString()
         );
     }
 
-    private static Map<String, String> getVC(LJDiagnostic diagnostic) {
+    private static Map<String, Object> getVC(LJDiagnostic diagnostic) {
         return switch (diagnostic) {
             case RefinementError e -> getVCMap(e.getExpected(), e.getFound());
             case StateRefinementError e -> getVCMap(e.getExpected(), e.getFoundSimplification());
@@ -66,21 +72,27 @@ final class DiagnosticMapper {
         };
     }
 
-    private static Map<String, String> getVCMap(Predicate expected, VCSimplificationResult found) {
-        return Map.of(
-            "simplified", formatVC(found, expected),
-            "original", formatVC(getOriginalVC(found), expected)
-        );
+    private static Map<String, Object> getVCMap(Predicate expected, VCSimplificationResult found) {
+        var history = new ArrayList<Map<String, Object>>();
+        for (var current = found; current != null; current = current.getOrigin()) {
+            Map<String, Object> step = new LinkedHashMap<>();
+            step.put("implication", current.getImplication().toString());
+            put(step, "simplification", current.getSimplification());
+            history.add(Map.copyOf(step));
+        }
+        return Map.of("expected", expected.toString(), "found", found.getImplication().toString(),
+                "history", List.copyOf(history.reversed()));
     }
 
-    private static VCSimplificationResult getOriginalVC(VCSimplificationResult result) {
-        VCSimplificationResult original = result;
-        while (original.getOrigin() != null) original = original.getOrigin();
-        return original;
-    }
-
-    private static String formatVC(VCSimplificationResult result, Predicate expected) {
-        return result.getImplication() + " => \n" + expected;
+    private static Map<String, Object> getDetails(LJDiagnostic diagnostic) {
+        return switch (diagnostic) {
+            case NotFoundError e -> Map.of("name", e.getName(), "kind", e.getKind().name().toLowerCase(Locale.ROOT));
+            case ExternalClassNotFoundWarning w -> Map.of("className", w.getClassName());
+            case ExternalMethodNotFoundWarning w -> Map.of(
+                    "className", w.getClassName(), "signature", w.getSignature(),
+                    "overloads", List.copyOf(Arrays.asList(w.getOverloads())));
+            default -> null;
+        };
     }
 
     private static List<Map<String, String>> getCounterexample(LJDiagnostic diagnostic) {

@@ -44,11 +44,15 @@ class GetDiagnosticsToolTest {
         var location = (Map<?, ?>) diagnostic.get("location");
         assertTrue(location.get("file").toString().endsWith("Invalid.java"));
         assertEquals(5, location.get("startLine"));
-        assertTrue(((Map<?, ?>) diagnostic.get("refinements")).get("expected").toString().contains("> 0"));
-        assertNotNull(((Map<?, ?>) diagnostic.get("refinements")).get("found"));
+        var refinements = (Map<?, ?>) diagnostic.get("refinements");
+        assertTrue(refinements.get("expected").toString().contains("> 0"));
+        assertNotNull(refinements.get("found"));
         var vc = (Map<?, ?>) diagnostic.get("vc");
-        assertNotNull(vc.get("simplified"));
-        assertNotNull(vc.get("original"));
+        assertTrue(vc.get("expected").toString().contains("> 0"));
+        var history = (List<?>) vc.get("history");
+        assertFalse(history.isEmpty());
+        assertEquals(((Map<?, ?>) history.getLast()).get("implication"), vc.get("found"));
+        assertFalse(diagnostic.containsKey("translationTable"));
         assertEquals(Map.of("success", true, "errors", List.of(), "warnings", List.of()), call("Valid.java"));
     }
 
@@ -99,7 +103,7 @@ class GetDiagnosticsToolTest {
         var assignment = (Map<?, ?>) assignments.getFirst();
         assertNotNull(assignment.get("variable"));
         assertNotNull(assignment.get("value"));
-        assertTrue(diagnostic.get("hint").toString().contains("Counterexample:"));
+        assertTrue(diagnostic.get("hint").toString().startsWith("Counterexample:"));
         assertNotNull(diagnostic.get("declarationLocation"));
     }
 

@@ -31,9 +31,15 @@ class DiagnosticMapperTest {
                         "expected", expected.toString(),
                         "found", found.getImplication().toPredicate().toString()),
                         mapped.get("refinements"));
+                var history = found == original
+                        ? List.of(Map.of("implication", original.getImplication().toString()))
+                        : List.of(Map.of("implication", original.getImplication().toString()),
+                                Map.of("implication", intermediate.getImplication().toString(), "simplification", "first"),
+                                Map.of("implication", simplified.getImplication().toString(), "simplification", "second"));
                 assertEquals(Map.of(
-                        "simplified", found.getImplication() + " => \n" + expected,
-                        "original", original.getImplication() + " => \n" + expected),
+                        "expected", expected.toString(),
+                        "found", found.getImplication().toString(),
+                        "history", history),
                         mapped.get("vc"));
             }
         }

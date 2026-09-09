@@ -70,7 +70,7 @@ Runs the LiquidJava verification and exposes diagnostics in a machine-readable f
 
 **Input:** File or directory path.
 
-**Output:** Verification status and `errors` and `warnings` arrays of structured diagnostics, including type, severity, location, message, refinements, hints, and counterexamples when available.
+**Output:** Verification status and `errors` and `warnings` arrays of structured diagnostics, including type, severity, location, message, refinements, VCs, details, hints, and counterexamples when available.
 
 ```json
 {
@@ -88,8 +88,17 @@ Runs the LiquidJava verification and exposes diagnostics in a machine-readable f
         "found": "input >= 0 && #ret_1 == input"
       },
       "vc": {
-        "simplified": "∀input:int, input >= 0 => \n∀#ret_1:int, #ret_1 == input => \n#ret_1 > 0",
-        "original": "∀input:int, input >= 0 => \n∀#value_0:int, #value_0 == input => \n∀#ret_1:int, #ret_1 == #value_0 => \n#ret_1 > 0"
+        "expected": "#ret_1 > 0",
+        "found": "∀input:int, input >= 0 => \n∀#ret_1:int, #ret_1 == input",
+        "history": [
+          {
+            "implication": "∀input:int, input >= 0 => \n∀#value_0:int, #value_0 == input => \n∀#ret_1:int, #ret_1 == #value_0"
+          },
+          {
+            "implication": "∀input:int, input >= 0 => \n∀#ret_1:int, #ret_1 == input",
+            "simplification": "Substitution"
+          }
+        ]
       },
       "type": "RefinementError",
       "severity": "error",

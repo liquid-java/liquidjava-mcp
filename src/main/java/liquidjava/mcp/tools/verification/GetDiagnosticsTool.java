@@ -17,7 +17,7 @@ public final class GetDiagnosticsTool extends AbstractMcpTool {
         super("get_diagnostics", """
             Runs LiquidJava and returns diagnostics in a structured, machine-readable format instead of plain-text terminal output.
             Prefer it over `verify` when you need to programmatically inspect, filter, or reason over individual errors or warnings.
-            Receives a file or directory path to verify and returns a `errors` and a `warnings` arrays, each containing structured diagnostics with type, severity, location, message, refinements, hints, and counterexamples when available.
+            Receives a file or directory path to verify and returns `errors` and `warnings` arrays, each containing structured diagnostics with type, severity, location, message, refinements, verification conditions, details, hints, and counterexamples when available.
             Locations use one-based lines and columns with inclusive ends.
         """, jsonMapper);
         this.verifier = verifier;
