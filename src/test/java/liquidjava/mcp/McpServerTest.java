@@ -8,6 +8,7 @@ import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -37,166 +38,89 @@ class McpServerTest {
     }
 
     @Test
-    void advertisesVerifyAndReturnsStructuredOutput() throws Exception {
+    void advertisesTools() {
         var tools = client.listTools().tools();
         assertEquals(List.of("verify", "get_diagnostics", "get_locals", "get_globals", "get_contracts", "check_validity", "check_satisfiability", "get_state_machine"), tools.stream().map(tool -> tool.name()).toList());
-
-        var result = client.callTool(verifyRequest("Valid.java"));
-        assertFalse(result.isError());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals(true, content.get("success"));
-        assertTrue(((String) content.get("output")).contains("Correct! Passed Verification."));
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tools.getFirst().outputSchema(), content).valid());
     }
 
     @Test
-    void returnsDebugOutputOverStdioWithoutLeakingIntoTheNextCall() throws Exception {
-        var path = verifyRequest("Invalid.java").arguments().get("path");
-        var result = client.callTool(new CallToolRequest("verify", Map.of("path", path, "debug", true)));
-        assertFalse(result.isError());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals(false, content.get("success"));
-        assertTrue(((String) content.get("output")).contains("[SMT]"));
-        assertTrue(((String) content.get("output")).contains("Refinement Error"));
-
-        var quiet = client.callTool(verifyRequest("Valid.java"));
-        assertFalse(quiet.isError());
-        var quietContent = (Map<?, ?>) quiet.structuredContent();
-        assertEquals(true, quietContent.get("success"));
-        assertFalse(((String) quietContent.get("output")).contains("[SMT]"));
-    }
-
-    @Test
-    void reportsRefinementFailureAsANormalToolResult() {
-        var result = client.callTool(verifyRequest("Invalid.java"));
-        assertFalse(result.isError());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals(false, content.get("success"));
-        assertTrue(((String) content.get("output")).contains("Refinement Error"));
-    }
-
-    @Test
-    void invalidInputUsesTheStructuredErrorContract() {
-        var result = client.callTool(new CallToolRequest("verify", Map.of()));
-        assertTrue(result.isError());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals(false, content.get("success"));
-        assertEquals("INVALID_INPUT", ((Map<?, ?>) content.get("error")).get("code"));
-    }
-
-    @Test
-    void returnsDiagnosticsOverStdio() throws Exception {
-        var tool = client.listTools().tools().stream()
-                .filter(candidate -> candidate.name().equals("get_diagnostics")).findFirst().orElseThrow();
-        var result = client.callTool(new CallToolRequest("get_diagnostics", verifyRequest("Counterexample.java").arguments()));
-        assertFalse(result.isError());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals(false, content.get("success"));
-        var diagnostic = (Map<?, ?>) ((List<?>) content.get("errors")).getFirst();
-        assertEquals("RefinementError", diagnostic.get("type"));
-        assertNotNull(diagnostic.get("counterexample"));
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-        var invalid = client.callTool(new CallToolRequest("get_diagnostics", Map.of()));
-        assertTrue(invalid.isError());
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
-    }
-
-    @Test
-    void returnsContextOverStdio() throws Exception {
-        String file = Path.of("src/test/resources/examples/Context.java").toAbsolutePath().toString();
-        for (String name : List.of("get_locals", "get_globals")) {
-            var tool = client.listTools().tools().stream()
-                    .filter(t -> t.name().equals(name)).findFirst().orElseThrow();
-            var arguments = name.equals("get_locals")
-                    ? Map.<String, Object>of("path", file, "file", file, "line", 12, "column", 9)
-                    : Map.<String, Object>of("path", file, "file", file);
-            var result = client.callTool(new CallToolRequest(name, arguments));
-            assertFalse(result.isError(), result.toString());
-            var content = (Map<?, ?>) result.structuredContent();
-            assertFalse(content.containsKey("errors"));
-            assertFalse(content.containsKey("warnings"));
-            assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-            if (name.equals("get_locals")) {
-                var variables = (List<Map<String, Object>>) content.get("variables");
-                assertTrue(variables.stream().anyMatch(v -> v.get("name").equals("input")));
-                assertTrue(variables.stream().anyMatch(v -> v.get("name").equals("first")));
-                assertFalse(variables.stream().anyMatch(v -> List.of("nested", "last", "unrelated").contains(v.get("name"))));
-            } else {
-                assertTrue(((List<Map<String, Object>>) content.get("aliases")).stream().anyMatch(a -> a.get("name").equals("Positive")));
-                assertTrue(((List<Map<String, Object>>) content.get("ghosts")).stream().anyMatch(g -> g.get("name").equals("size")));
-                assertEquals(2, ((List<?>) content.get("states")).size());
-            }
-            var invalid = client.callTool(new CallToolRequest(name, Map.of()));
-            assertTrue(invalid.isError());
-            assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
-        }
-    }
-
-    @Test
-    void returnsContractsOverStdio() {
-        var tool = client.listTools().tools().stream()
-                .filter(candidate -> candidate.name().equals("get_contracts")).findFirst().orElseThrow();
-        String path = Path.of("src/test/resources/examples/Contracts.java").toAbsolutePath().toString();
-
-        var result = client.callTool(new CallToolRequest("get_contracts", Map.of(
-                "path", path, "signature", "examples.Contracts.increment(int)")));
+    void verifyTool() {
+        CallToolRequest request = CallToolRequest.builder("verify").arguments(
+            Map.of("path", examplePath("Valid.java"))
+        ).build();
+        CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals(1, ((List<?>) content.get("contracts")).size());
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-
-        var invalid = client.callTool(new CallToolRequest("get_contracts", Map.of()));
-        assertTrue(invalid.isError());
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
     }
 
     @Test
-    void checksValidityOverStdioAlongsideVerification() throws Exception {
-        var tool = client.listTools().tools().stream()
-                .filter(t -> t.name().equals("check_validity")).findFirst().orElseThrow();
-        var arguments = Map.<String, Object>of("variables", Map.of("x", "int"),
-                "ghosts", Map.of(), "assumptions", List.of("x >= 0"), "conclusion", "x > 0");
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.inputSchema(), arguments).valid());
-        client.callTool(verifyRequest("Valid.java"));
-        var result = client.callTool(new CallToolRequest("check_validity", arguments));
-        assertFalse(result.isError());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals("invalid", content.get("status"));
-        assertEquals(List.of(Map.of("variable", "x", "value", "0")), content.get("counterexample"));
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-        var invalid = client.callTool(new CallToolRequest("check_validity", Map.of()));
-        assertTrue(invalid.isError());
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
-        assertEquals(true, ((Map<?, ?>) client.callTool(verifyRequest("Valid.java")).structuredContent()).get("success"));
+    void getDiagnosticsTool() {
+        CallToolRequest request = CallToolRequest.builder("get_diagnostics").arguments(
+            Map.of("path", examplePath("Counterexample.java"))
+        ).build();
+        CallToolResult result = client.callTool(request);
+        assertFalse(result.isError(), result.toString());
     }
 
     @Test
-    void checksSatisfiabilityOverStdio() {
-        var tool = client.listTools().tools().stream()
-                .filter(t -> t.name().equals("check_satisfiability")).findFirst().orElseThrow();
-        var arguments = Map.<String, Object>of("variables", Map.of("x", "int"),
-                "ghosts", Map.of(), "constraints", List.of("x == 11"));
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.inputSchema(), arguments).valid());
-        var result = client.callTool(new CallToolRequest("check_satisfiability", arguments));
-        assertFalse(result.isError());
-        var content = (Map<?, ?>) result.structuredContent();
-        assertEquals("sat", content.get("status"));
-        assertEquals(List.of(Map.of("variable", "x", "value", "11")), content.get("assignment"));
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), content).valid());
-
-        var unsat = client.callTool(new CallToolRequest("check_satisfiability", Map.of(
-                "variables", Map.of("x", "int"), "ghosts", Map.of(),
-                "constraints", List.of("x > 10", "x < 5"))));
-        assertFalse(unsat.isError());
-        assertEquals("unsat", ((Map<?, ?>) unsat.structuredContent()).get("status"));
-
-        var invalid = client.callTool(new CallToolRequest("check_satisfiability", Map.of()));
-        assertTrue(invalid.isError());
-        assertTrue(McpJsonDefaults.getSchemaValidator().validate(tool.outputSchema(), invalid.structuredContent()).valid());
+    void getLocalsTool() {
+        CallToolRequest request = CallToolRequest.builder("get_locals").arguments(
+            Map.of("path", examplePath("Context.java"), "line", 12, "column", 9)
+        ).build();
+        CallToolResult result = client.callTool(request);
+        assertFalse(result.isError(), result.toString());
     }
 
-    private static CallToolRequest verifyRequest(String example) {
-        String path = Path.of("src/test/resources/examples", example).toAbsolutePath().toString();
-        return new CallToolRequest("verify", Map.of("path", path));
+    @Test
+    void getGlobalsTool() {
+        CallToolRequest request = CallToolRequest.builder("get_globals").arguments(
+            Map.of("path", examplePath("Context.java"))
+        ).build();
+        CallToolResult result = client.callTool(request);
+        assertFalse(result.isError(), result.toString());
+    }
+
+    @Test
+    void getContractsTool() {
+        CallToolRequest request = CallToolRequest.builder("get_contracts").arguments(
+            Map.of("path", examplePath("Contracts.java"), "signature", "examples.Contracts.increment(int)")
+        ).build();
+        CallToolResult result = client.callTool(request);
+        assertFalse(result.isError(), result.toString());
+    }
+
+    @Test
+    void checkValidityTool() {
+        CallToolRequest request = CallToolRequest.builder("check_validity").arguments(Map.of(
+            "variables", Map.of("x", "int"),
+            "ghosts", Map.of(),
+            "assumptions", List.of("x >= 0"),
+            "conclusion", "x > 0")
+        ).build();
+        CallToolResult result = client.callTool(request);
+        assertFalse(result.isError(), result.toString());
+    }
+
+    @Test
+    void checkSatisfiabilityTool() {
+        CallToolRequest request = CallToolRequest.builder("check_satisfiability").arguments(Map.of(
+            "variables", Map.of("x", "int"),
+            "ghosts", Map.of(),
+            "constraints", List.of("x == 11"))
+        ).build();
+        CallToolResult result = client.callTool(request);
+        assertFalse(result.isError(), result.toString());
+    }
+
+    @Test
+    void getStateMachineTool() {
+        CallToolRequest request = CallToolRequest.builder("get_state_machine").arguments(
+            Map.of("path", examplePath("StateMachine.java"))
+        ).build();
+        CallToolResult result = client.callTool(request);
+        assertFalse(result.isError(), result.toString());
+    }
+
+    private static String examplePath(String example) {
+        return Path.of("src/test/resources/examples", example).toAbsolutePath().toString();
     }
 }

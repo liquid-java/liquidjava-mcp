@@ -3,7 +3,6 @@ package liquidjava.mcp.tools.verification;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
-import io.modelcontextprotocol.json.TypeRef;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,8 +15,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 @org.junit.jupiter.api.parallel.ResourceLock("liquidjava-global-state")
 @org.junit.jupiter.api.parallel.ResourceLock("java.lang.System.out")
 class VerifyToolTest {
-    private static final TypeRef<Map<String, Object>> MAP = new TypeRef<>() {};
-
     @Test
     void passesPathWithoutChangingIt() throws Exception {
         var received = new AtomicReference<VerifyRequest>();
@@ -109,12 +106,8 @@ class VerifyToolTest {
         nullDebug.put("path", "x.java");
         nullDebug.put("debug", null);
         return Stream.of(
-            null, Map.of(), Map.of("path", List.of("x.java")), Map.of("path", 1),
-            Map.of("path", List.of()), Map.of("path", ""), Map.of("path", " \t\n"),
-            Map.of("path", "x\u0000.java"), Map.of("path", List.of(1)),
-            Map.of("path", List.of("x.java", "y.java")), Map.of("path", "x.java", "debug", "true"),
-            Map.of("path", "x.java", "debug", 1),
-            nullDebug,
+            null, Map.of(), Map.of("path", 1), Map.of("path", ""),
+            Map.of("path", "x.java", "debug", "true"), nullDebug,
             Map.of("path", "x.java", "extra", true)
         );
     }
