@@ -25,17 +25,17 @@ LiquidJava is an additional compile-time Java type checker based on refinement t
 
 ## Tools
 
-| Need | Tool | When to use |
-|---|---|---|
-| Quick verification run | `verify(path)` | Quick checks, CLI-style output, lower token usage. |
-| Detailed verification trace | `verify(path, debug=true)` | Inspect verification conditions, simplifications, and solver results to explain a failure at the cost of higher token usage. |
-| Get more detailed diagnostics | `get_diagnostics(path)` | Reason about individual errors and warnings in a structured format. |
-| Variables and refinements near a failure | `get_locals(path, line, column, file?)` | Inspect the verification context at a specific source position. |
-| Aliases, ghosts, states | `get_globals(path, file?)` | Inspect global definitions available in the program. |
-| Method or constructor refinements | `get_contracts(path, className?, signature?)` | Inspect method and constructor contracts, including parameters, return refinements, and state transitions |
-| Typestate protocol | `get_state_machine(path)` | Understand the allowed transitions for a typestate protocol. |
-| Check if assumptions imply a conclusion | `check_validity(variables, assumptions, conclusion)` | Test whether custom assumptions prove a specified conclusion. |
-| Check if constraints are satisfiable | `check_satisfiability(variables, constraints)` | Check if a set of constraints are satisfiable or detect contradictions.
+| Tool | When to use |
+|---|---|
+| `verify(path)` | Quick verification run, CLI-style output, lower token usage. |
+| `verify(path, debug=true)` | Detailed verification trace: verification conditions, simplifications, and solver results to explain a failure at the cost of higher token usage. |
+| `get_diagnostics(path)` | Reason about individual errors and warnings in a structured format with more details. |
+| `get_locals(path, line, column, file?)` | Inspect variables and their refinements at a specific source position. |
+| `get_globals(path, file?)` | Inspect global definitions available in the program: aliases, ghosts, and states. |
+| `get_contracts(path, className?, signature?)` | Inspect method and constructor contracts, including parameter refinements, return refinements, and state transitions |
+| `get_state_machine(path)` | Understand the allowed transitions for a typestate protocol. |
+| `check_validity(variables, assumptions, conclusion)` | Check whether assumptions prove a specified conclusion. |
+| `check_satisfiability(variables, constraints)` | Check whether a set of constraints are satisfiable or detect contradictions.
 
 ## Behavior
 
