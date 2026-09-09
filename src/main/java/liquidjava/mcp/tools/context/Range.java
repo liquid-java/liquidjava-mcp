@@ -1,5 +1,6 @@
 package liquidjava.mcp.tools.context;
 
+import liquidjava.mcp.utils.Regex;
 import spoon.reflect.cu.SourcePosition;
 
 public record Range(int startLine, int startColumn, int endLine, int endColumn) {
@@ -8,7 +9,7 @@ public record Range(int startLine, int startColumn, int endLine, int endColumn) 
     }
 
     static Range parse(String scope) {
-        String[] parts = scope.split("[:-]");
+        String[] parts = Regex.RANGE_SEPARATOR.split(scope);
         return new Range(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]),
                 Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
     }

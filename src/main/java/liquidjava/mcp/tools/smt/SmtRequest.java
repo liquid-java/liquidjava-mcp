@@ -6,14 +6,13 @@ import java.util.Map;
 import java.util.Set;
 import liquidjava.rj_language.ast.Var;
 import liquidjava.rj_language.parsing.RefinementsParser;
+import liquidjava.mcp.utils.Regex;
 
 public record SmtRequest(
     Map<String, String> variables,
     Map<String, GhostDeclaration> ghosts,
     List<String> constraints
 ) {
-    private static final String TYPE_PATTERN = "(?:[a-zA-Z_$][a-zA-Z0-9_$]*\\.)*[a-zA-Z_$][a-zA-Z0-9_$]*";
-
     public SmtRequest {
         variables = Map.copyOf(variables);
         ghosts = Map.copyOf(ghosts);
@@ -68,13 +67,13 @@ public record SmtRequest(
     }
 
     private static boolean validType(String type) {
-        return type != null && type.matches(TYPE_PATTERN);
+        return type != null && Regex.TYPE.matcher(type).matches();
     }
 
     static boolean validName(String name) {
         if (name == null)
             return false;
-        if (!name.matches("#*[a-zA-Z_][a-zA-Z0-9_#]*") || Set.of("_", "this", "old").contains(name))
+        if (!Regex.NAME.matcher(name).matches() || Set.of("_", "this", "old").contains(name))
             return false;
         try {
             return RefinementsParser.createAST(name, "") instanceof Var variable && variable.getName().equals(name);

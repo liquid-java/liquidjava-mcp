@@ -6,12 +6,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.regex.Pattern;
 import spoon.reflect.cu.SourcePosition;
 
 public final class Utils {
-    private static final Pattern ANSI_ESCAPE_PATTERN = Pattern.compile("\u001B\\[[0-9;]*m");
-
     private Utils() {}
 
     public static Map<String, Object> mapPosition(SourcePosition position) {
@@ -24,7 +21,7 @@ public final class Utils {
     }
 
     public static String stripAnsi(ByteArrayOutputStream bytes) {
-        return ANSI_ESCAPE_PATTERN.matcher(bytes.toString(StandardCharsets.UTF_8)).replaceAll("");
+        return Regex.ANSI_ESCAPE.matcher(bytes.toString(StandardCharsets.UTF_8)).replaceAll("");
     }
 
     public static Path canonicalPath(String path) throws IOException {

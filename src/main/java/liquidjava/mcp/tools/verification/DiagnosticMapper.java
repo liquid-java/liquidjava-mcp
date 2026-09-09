@@ -73,8 +73,8 @@ final class DiagnosticMapper {
     }
 
     private static Map<String, Object> getVCMap(Predicate expected, VCSimplificationResult found) {
-        var history = new ArrayList<Map<String, Object>>();
-        for (var current = found; current != null; current = current.getOrigin()) {
+        ArrayList<Map<String, Object>> history = new ArrayList<Map<String, Object>>();
+        for (VCSimplificationResult current = found; current != null; current = current.getOrigin()) {
             Map<String, Object> step = new LinkedHashMap<>();
             step.put("implication", current.getImplication().toString());
             put(step, "simplification", current.getSimplification());

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import liquidjava.mcp.utils.Regex;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -129,7 +130,7 @@ class LiquidJavaVerifierTest {
         } finally {
             System.setOut(original);
         }
-        String expected = bytes.toString(StandardCharsets.UTF_8).replaceAll("\u001B\\[[0-9;]*m", "");
+        String expected = Regex.ANSI_ESCAPE.matcher(bytes.toString(StandardCharsets.UTF_8)).replaceAll("");
         assertEquals(expected, verify(path).output());
     }
 
