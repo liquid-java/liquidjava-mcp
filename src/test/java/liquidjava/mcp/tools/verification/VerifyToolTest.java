@@ -3,26 +3,50 @@ package liquidjava.mcp.tools.verification;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+import liquidjava.api.CommandLineLauncher;
 import liquidjava.mcp.tools.McpError;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@org.junit.jupiter.api.parallel.ResourceLock("liquidjava-global-state")
-@org.junit.jupiter.api.parallel.ResourceLock("java.lang.System.out")
+@ResourceLock("liquidjava-global-state")
+@ResourceLock("java.lang.System.out")
 class VerifyToolTest {
     @Test
-    void passesPathWithoutChangingIt() throws Exception {
+    void rejectsNonJavaFilesAndMissingPathsBeforeVerification(@TempDir Path temporary) throws Exception {
+        Path text = Files.writeString(temporary.resolve("input.txt"), "plain text, not Java");
+        Verifier verifier = request -> fail("verifier must not run");
+        var mapper = McpJsonDefaults.getMapper();
+        for (var tool : List.of(new VerifyTool(verifier, mapper), new GetDiagnosticsTool(verifier, mapper))) {
+            for (Path path : List.of(text, temporary.resolve("missing.java"))) {
+                var result = tool.call(Map.of("path", path.toString()));
+                assertTrue(result.isError());
+                var content = (Map<?, ?>) result.structuredContent();
+                assertEquals(false, content.get("success"));
+                assertEquals("INVALID_INPUT", ((Map<?, ?>) content.get("error")).get("code"));
+            }
+        }
+    }
+
+    @Test
+    void passesPathWithoutChangingIt(@TempDir Path temporary) throws Exception {
         var received = new AtomicReference<VerifyRequest>();
         var tool = new VerifyTool(request -> {
             received.set(request);
             return VerifyResult.completed(true, "Correct! Passed Verification.\n", List.of(), List.of());
         }, McpJsonDefaults.getMapper());
-        String path = "folder/../folder/file with spaces.java";
+        Files.createDirectory(temporary.resolve("folder"));
+        Files.writeString(temporary.resolve("folder/file with spaces.java"), "class Example {}");
+        String path = temporary.resolve("folder/../folder/file with spaces.java").toString();
         var result = tool.call(Map.of("path", path));
         assertEquals(path, received.get().path());
         assertFalse(result.isError());
@@ -44,7 +68,7 @@ class VerifyToolTest {
             String output = (String) content.get("output");
             assertEquals(Boolean.TRUE.equals(arguments.get("debug")), output.contains("[SMT]"), output);
             assertFalse(output.contains("\u001B"));
-            assertFalse(liquidjava.api.CommandLineLauncher.cmdArgs.debugMode);
+            assertFalse(CommandLineLauncher.cmdArgs.debugMode);
         }
     }
 
@@ -54,7 +78,7 @@ class VerifyToolTest {
             request -> VerifyResult.completed(false, "Refinement Error", List.of(), List.of()),
             McpJsonDefaults.getMapper()
         );
-        var result = tool.call(Map.of("path", "Example.java"));
+        var result = tool.call(Map.of("path", "src/test/resources/examples/Valid.java"));
         assertFalse(result.isError());
         assertEquals(Map.of("success", false, "output", "Refinement Error"), result.structuredContent());
     }
@@ -65,7 +89,7 @@ class VerifyToolTest {
             request -> VerifyResult.failed(McpError.Code.VERIFIER_ERROR, "parse failed", "Running LiquidJava on: Example.java\n"),
             McpJsonDefaults.getMapper()
         );
-        var result = tool.call(Map.of("path", "Example.java"));
+        var result = tool.call(Map.of("path", "src/test/resources/examples/Valid.java"));
         assertTrue(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
         assertEquals(false, content.get("success"));
@@ -102,7 +126,7 @@ class VerifyToolTest {
     }
 
     private static Stream<Map<String, Object>> invalidArguments() {
-        var nullDebug = new java.util.HashMap<String, Object>();
+        var nullDebug = new HashMap<String, Object>();
         nullDebug.put("path", "x.java");
         nullDebug.put("debug", null);
         return Stream.of(

@@ -91,13 +91,10 @@ class LiquidJavaVerifierTest {
     }
 
     @Test
-    void missingPathUsesLiquidJavaDiagnostic() {
+    void missingPathIsRejected() {
         String missing = temporary.resolve("missing.java").toString();
-        var result = verify(missing);
-        assertFalse(result.success());
-        assertNull(result.error());
-        assertTrue(result.output().contains("The path " + missing + " was not found"));
-        assertFalse(result.output().contains("Passed Verification"));
+        var error = assertThrows(IllegalArgumentException.class, () -> verify(missing));
+        assertEquals("The path " + missing + " was not found", error.getMessage());
     }
 
     @Test
@@ -111,11 +108,8 @@ class LiquidJavaVerifierTest {
 
     @Test
     void cliOptionsAreTreatedAsLiteralPaths() {
-        var result = verify("--help");
-        assertFalse(result.success());
-        assertNull(result.error());
-        assertTrue(result.output().contains("The path --help was not found"), result.output());
-        assertFalse(result.output().contains("Usage:"));
+        var error = assertThrows(IllegalArgumentException.class, () -> verify("--help"));
+        assertEquals("The path --help was not found", error.getMessage());
     }
 
     @ParameterizedTest

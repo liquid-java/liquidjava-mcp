@@ -13,6 +13,7 @@ import liquidjava.processor.context.Context;
 import liquidjava.processor.context.ContextHistory;
 import liquidjava.processor.context.GhostFunction;
 import liquidjava.processor.context.GhostState;
+import liquidjava.processor.context.ObjectState;
 import liquidjava.processor.context.RefinedFunction;
 import liquidjava.processor.context.RefinedVariable;
 import liquidjava.processor.context.Variable;
@@ -160,7 +161,7 @@ final class ContextMapper {
         );
     }
 
-    private static Map<String, Object> stateTransition(liquidjava.processor.context.ObjectState state) {
+    private static Map<String, Object> stateTransition(ObjectState state) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("from", state.hasFrom() ? state.getFrom().toString() : null);
         result.put("to", state.hasTo() ? state.getTo().toString() : null);

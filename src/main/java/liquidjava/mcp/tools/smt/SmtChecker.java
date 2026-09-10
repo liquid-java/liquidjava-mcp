@@ -12,6 +12,7 @@ import liquidjava.processor.context.Variable;
 import liquidjava.processor.facade.GhostDTO;
 import liquidjava.rj_language.Predicate;
 import liquidjava.rj_language.ast.AliasInvocation;
+import liquidjava.rj_language.ast.Enum;
 import liquidjava.rj_language.ast.Expression;
 import liquidjava.rj_language.ast.FunctionInvocation;
 import liquidjava.rj_language.ast.Var;
@@ -84,7 +85,7 @@ public final class SmtChecker {
         if (expression instanceof Var variable && !variables.containsKey(variable.getName()))
             throw new IllegalArgumentException("undeclared variable: " + variable.getName());
 
-        if (expression instanceof AliasInvocation || expression instanceof liquidjava.rj_language.ast.Enum)
+        if (expression instanceof AliasInvocation || expression instanceof Enum)
             throw new IllegalArgumentException("aliases and source constants are not supported");
 
         if (expression instanceof FunctionInvocation function && !ghosts.containsKey(function.getName()))

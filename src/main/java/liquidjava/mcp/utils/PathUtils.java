@@ -10,15 +10,6 @@ import java.nio.file.Path;
 public final class PathUtils {
     private PathUtils() {}
 
-    public static Path requireValid(String value, String name) {
-        requireNonBlank(value, name);
-        try {
-            return Path.of(value);
-        } catch (InvalidPathException e) {
-            throw new IllegalArgumentException("invalid path: " + e.getReason(), e);
-        }
-    }
-
     public static Path requireExisting(String value) {
         requireNonBlank(value, "path");
         try {

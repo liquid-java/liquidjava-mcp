@@ -8,8 +8,11 @@ import java.util.Map;
 import liquidjava.mcp.tools.McpError;
 import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
 import liquidjava.mcp.tools.verification.VerifyRequest;
+import liquidjava.processor.context.Context;
+import liquidjava.rj_language.Predicate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import spoon.Launcher;
 
 @ResourceLock("liquidjava-global-state")
 @ResourceLock("java.lang.System.out")
@@ -119,11 +122,11 @@ class CheckValidityToolTest {
 
     @Test
     void ignoresAndPreservesExistingGlobalDeclarations() throws Exception {
-        var context = liquidjava.processor.context.Context.getInstance();
+        var context = Context.getInstance();
         var globals = List.copyOf(context.getCtxGlobalVars());
         try {
             context.addGlobalVariableToContext("previousGlobal", "test",
-                    new spoon.Launcher().getFactory().Type().INTEGER_PRIMITIVE, new liquidjava.rj_language.Predicate());
+                    new Launcher().getFactory().Type().INTEGER_PRIMITIVE, new Predicate());
             call(query(Map.of(), List.of(), "previousGlobal == 0"), true);
             call(query(Map.of("previousGlobal", "boolean"), List.of(), "previousGlobal || !previousGlobal"), false);
             assertEquals("int", context.getContext().get("previousGlobal").getQualifiedName());

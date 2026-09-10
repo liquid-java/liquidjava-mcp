@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
@@ -135,11 +136,11 @@ class ContextToolsTest {
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
         assertEquals(Set.of("FirstAlias", "SecondAlias"), ((List<Map<?, ?>>) content.get("aliases")).stream()
-                .map(alias -> (String) alias.get("name")).collect(java.util.stream.Collectors.toSet()));
+                .map(alias -> (String) alias.get("name")).collect(Collectors.toSet()));
         assertEquals(List.of("firstGhost"), ((List<Map<?, ?>>) content.get("ghosts")).stream()
                 .map(ghost -> ghost.get("name")).toList());
         assertEquals(Set.of("firstOpen", "firstClosed"), ((List<Map<?, ?>>) content.get("states")).stream()
-                .map(state -> (String) state.get("name")).collect(java.util.stream.Collectors.toSet()));
+                .map(state -> (String) state.get("name")).collect(Collectors.toSet()));
         assertEquals(Set.of("path"), Set.copyOf((List<?>) globals.specification().tool().inputSchema()
                 .get("required")));
         assertEquals(Set.of("path", "file"), ((Map<?, ?>) globals.specification().tool().inputSchema()
@@ -153,12 +154,12 @@ class ContextToolsTest {
         assertFalse(result.isError());
         var content = (Map<?, ?>) result.structuredContent();
         assertEquals(Set.of("FirstAlias", "SecondAlias"), ((List<Map<?, ?>>) content.get("aliases")).stream()
-                .map(alias -> (String) alias.get("name")).collect(java.util.stream.Collectors.toSet()));
+                .map(alias -> (String) alias.get("name")).collect(Collectors.toSet()));
         assertEquals(Set.of("firstGhost", "secondGhost"), ((List<Map<?, ?>>) content.get("ghosts")).stream()
-                .map(ghost -> (String) ghost.get("name")).collect(java.util.stream.Collectors.toSet()));
+                .map(ghost -> (String) ghost.get("name")).collect(Collectors.toSet()));
         assertEquals(Set.of("firstOpen", "firstClosed", "secondOpen", "secondClosed"),
                 ((List<Map<?, ?>>) content.get("states")).stream()
-                        .map(state -> (String) state.get("name")).collect(java.util.stream.Collectors.toSet()));
+                        .map(state -> (String) state.get("name")).collect(Collectors.toSet()));
     }
 
     @Test

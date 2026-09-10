@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import liquidjava.mcp.tools.McpError;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
 
 @ResourceLock("liquidjava-global-state")
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 class GetDiagnosticsToolTest {
     private final GetDiagnosticsTool tool = new GetDiagnosticsTool(new LiquidJavaVerifier(), McpJsonDefaults.getMapper());
 
-    @org.junit.jupiter.api.io.TempDir Path temporary;
+    @TempDir Path temporary;
 
     private Map<?, ?> call(String example) throws Exception {
         String path = Path.of("src/test/resources/examples").resolve(example).toString();
@@ -57,18 +58,13 @@ class GetDiagnosticsToolTest {
     }
 
     @Test
-    void exposesWarningsAndDiagnosticsWithoutLocations() throws Exception {
+    void exposesWarnings() throws Exception {
         var warningResult = call("Warning.java");
         assertEquals(true, warningResult.get("success"));
         var warning = (Map<?, ?>) ((List<?>) warningResult.get("warnings")).getFirst();
         assertEquals("warning", warning.get("severity"));
         assertEquals("UnsatisfiableRefinementWarning", warning.get("type"));
         assertNotNull(warning.get("refinements"));
-        var missing = call("does-not-exist.java");
-        assertEquals(false, missing.get("success"));
-        var error = (Map<?, ?>) ((List<?>) missing.get("errors")).getFirst();
-        assertEquals("CustomError", error.get("type"));
-        assertFalse(error.containsKey("location"));
     }
 
     @Test
@@ -112,7 +108,7 @@ class GetDiagnosticsToolTest {
         var failing = new GetDiagnosticsTool(request -> VerifyResult.failed(
                 McpError.Code.VERIFIER_ERROR, "failed", "partial output"),
                 McpJsonDefaults.getMapper());
-        var result = failing.call(Map.of("path", "Example.java"));
+        var result = failing.call(Map.of("path", "src/test/resources/examples/Valid.java"));
         assertTrue(result.isError());
         assertEquals(Map.of("success", false, "errors", List.of(), "warnings", List.of(),
                 "error", Map.of("code", "VERIFIER_ERROR", "message", "failed")), result.structuredContent());
