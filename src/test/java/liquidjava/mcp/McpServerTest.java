@@ -50,6 +50,9 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(true, content.get("success"));
+        assertTrue(((String) content.get("output")).contains("Correct! Passed Verification."));
     }
 
     @Test
@@ -59,6 +62,11 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(false, content.get("success"));
+        var diagnostic = (Map<?, ?>) ((List<?>) content.get("errors")).getFirst();
+        assertEquals("RefinementError", diagnostic.get("type"));
+        assertFalse(((List<?>) diagnostic.get("counterexample")).isEmpty());
     }
 
     @Test
@@ -68,6 +76,8 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertTrue(((List<?>) content.get("variables")).stream().anyMatch(variable -> "input".equals(((Map<?, ?>) variable).get("name"))));
     }
 
     @Test
@@ -77,6 +87,9 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        var alias = (Map<?, ?>) ((List<?>) content.get("aliases")).getFirst();
+        assertEquals("Positive", alias.get("name"));
     }
 
     @Test
@@ -86,6 +99,10 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        var contracts = (List<?>) content.get("contracts");
+        assertEquals(1, contracts.size());
+        assertEquals("examples.Contracts.increment(int)", ((Map<?, ?>) contracts.getFirst()).get("signature"));
     }
 
     @Test
@@ -98,6 +115,9 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals("invalid", content.get("status"));
+        assertEquals(List.of(Map.of("variable", "x", "value", "0")), content.get("counterexample"));
     }
 
     @Test
@@ -109,6 +129,9 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals("sat", content.get("status"));
+        assertEquals(List.of(Map.of("variable", "x", "value", "11")), content.get("assignment"));
     }
 
     @Test
@@ -118,6 +141,19 @@ class McpServerTest {
         ).build();
         CallToolResult result = client.callTool(request);
         assertFalse(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        var stateMachine = (Map<?, ?>) content.get("stateMachine");
+        assertEquals("examples.StateMachine", stateMachine.get("className"));
+        assertEquals(List.of("open", "closed"), stateMachine.get("states"));
+    }
+
+    @Test
+    void invalidInputReturnsToolError() {
+        var result = client.callTool(CallToolRequest.builder("verify").arguments(Map.of()).build());
+        assertTrue(result.isError(), result.toString());
+        var content = (Map<?, ?>) result.structuredContent();
+        assertEquals(false, content.get("success"));
+        assertEquals("INVALID_INPUT", ((Map<?, ?>) content.get("error")).get("code"));
     }
 
     private static String examplePath(String example) {
