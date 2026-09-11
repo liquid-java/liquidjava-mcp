@@ -30,20 +30,20 @@ Build the project with `mvn package` and then point your MCP client at the resul
 
 | Tool | Purpose | Input | Output |
 |---|---|---|---|
-| `verify` | Run the verification, get human-readable output (same as CLI) | `path`, `debug?` | standard LiquidJava output |
-| `get_diagnostics` | Run verification, get more detailed structured diagnostics | `path` | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
+| `verify` | Run the verification and get human-readable output (same as the CLI) | `path`, `debug?` | standard LiquidJava output |
+| `get_diagnostics` | Run the verification and get more detailed structured diagnostics | `path` | `errors` and `warnings` arrays (type, severity, location, message, refinements, hints, counterexamples) |
 | `get_locals` | Inspect verification context (variables in scope) at a specific source position | `path`, `file?`, `line`, `column` | `variables` (name, internal name, type, refinement, location) |
 | `get_globals` | Inspect global definitions (aliases, ghosts, states) available in the program | `path`, `file?` | `aliases`, `ghosts`, `states` |
 | `get_contracts` | Inspect method and constructor contracts | `path`, `className?`, `signature?` | `contracts` (qualified signature, parameters, return refinement, state transitions, location) |
 | `get_state_machine` | Parse a Java file's LiquidJava typestate protocol | `path` | `stateMachine` with states and transitions |
-| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `ghosts`, `assumptions`, `conclusion` | `status` (`valid`, `invalid`, or `unknown`), `counterexample` (for invalid results)|
+| `check_validity` | Check if assumptions imply a conclusion via the solver | `variables`, `ghosts`, `assumptions`, `conclusion` | `status` (`valid`, `invalid`, or `unknown`), `counterexample` (for invalid results) |
 | `check_satisfiability` | Check if constraints are satisfiable via the solver | `variables`, `ghosts`, `constraints` | `status` (`sat`, `unsat`, or `unknown`), `assignment` (for satisfiable results) |
 
 The `verify`, `get_diagnostics`, `get_locals`, `get_globals`, and `get_contracts` tools reuse cached analysis when the input path, source hash, and debug option match. Requests time out after 60 seconds, including time waiting for another analysis, and return a verifier error with any captured output.
 
 ### `verify`
 
-Runs the LiquidJava verification and returns the same representation normally shown to developers.
+Runs the LiquidJava verification and returns the same output normally shown to developers.
 Allows agents to inspect verification conditions, their simplifications, and solver results using the `debug` flag.
 
 **Input:** File or directory path, with optional `debug` flag.
@@ -314,7 +314,7 @@ This includes source contracts and external refinement contracts.
 
 Parses a Java source file and returns the LiquidJava typestate protocol declared by its `@StateSet` and `@StateRefinement` annotations. The result describes the possible states, initial states, and method transitions. A transition's `fromCondition` and `toCondition` contain any non-state conditions such as `cond ? state1 : state2` or `cond && state1`.
 
-**Input:** `path`, an existing Java source file. Directories are not accepted because the parser returns the state machine for one source type at a time.
+**Input:** `path`, an existing Java source file. Directories are not accepted because the parser returns the state machine for one source file at a time.
 
 **Output:** An object containing a `stateMachine` value with the qualified class name, states, initial transitions, and method transitions. `stateMachine` is `null` when the file does not declare a state machine.
 
