@@ -6,6 +6,7 @@ import com.microsoft.z3.Model;
 import com.microsoft.z3.Solver;
 import java.util.Map;
 import liquidjava.mcp.tools.McpError;
+import liquidjava.mcp.utils.Utils;
 import liquidjava.processor.context.Context;
 import liquidjava.processor.context.GhostFunction;
 import liquidjava.processor.context.Variable;
@@ -47,9 +48,9 @@ public final class SmtChecker {
                 };
             }
         } catch (IllegalArgumentException e) {
-            return SmtResult.failed(McpError.Code.INVALID_INPUT, getMessage(e));
+            return SmtResult.failed(McpError.Code.INVALID_INPUT, Utils.getMessage(e));
         } catch (Exception | LinkageError e) {
-            return SmtResult.failed(McpError.Code.VERIFIER_ERROR, getMessage(e));
+            return SmtResult.failed(McpError.Code.VERIFIER_ERROR, Utils.getMessage(e));
         }
     }
 
@@ -74,7 +75,7 @@ public final class SmtChecker {
                 throw new IllegalArgumentException("expected a boolean predicate");
             return new Predicate(expression);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid predicate '" + text + "': " + getMessage(e), e);
+            throw new IllegalArgumentException("Invalid predicate '" + text + "': " + Utils.getMessage(e), e);
         }
     }
 
@@ -93,9 +94,5 @@ public final class SmtChecker {
         
         for (Expression child : expression.getChildren())
             validateReferences(child, variables, ghosts);
-    }
-
-    private static String getMessage(Throwable error) {
-        return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
     }
 }

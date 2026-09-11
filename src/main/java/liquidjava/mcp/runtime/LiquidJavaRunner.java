@@ -117,8 +117,7 @@ public final class LiquidJavaRunner {
             cachedAnalysis = null;
             if (cancelled.get()) return null;
             e.printStackTrace(System.err);
-            String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-            return failure.apply(message, Utils.stripAnsi(bytes));
+            return failure.apply(Utils.getMessage(e), Utils.stripAnsi(bytes));
         } finally {
             CommandLineLauncher.cmdArgs.lspMode = false;
             CommandLineLauncher.cmdArgs.debugMode = false;

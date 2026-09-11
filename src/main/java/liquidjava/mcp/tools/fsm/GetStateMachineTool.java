@@ -11,6 +11,7 @@ import liquidjava.fsm.StateMachineParser;
 import liquidjava.fsm.StateMachineTransition;
 import liquidjava.mcp.tools.AbstractMcpTool;
 import liquidjava.mcp.tools.McpError;
+import liquidjava.mcp.utils.Utils;
 
 /**
  * Parses a Java source file for its LiquidJava state machine.
@@ -41,7 +42,7 @@ public final class GetStateMachineTool extends AbstractMcpTool {
             content.put("stateMachine", map(stateMachine));
             return result(content);
         } catch (Exception e) {
-            return errorResult(McpError.Code.VERIFIER_ERROR, message(e));
+            return errorResult(McpError.Code.VERIFIER_ERROR, Utils.getMessage(e));
         }
     }
 
@@ -49,10 +50,6 @@ public final class GetStateMachineTool extends AbstractMcpTool {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("stateMachine", null);
         return result(content, new McpError(code, message));
-    }
-
-    private static String message(Throwable error) {
-        return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
     }
 
     private static Map<String, Object> map(StateMachine stateMachine) {

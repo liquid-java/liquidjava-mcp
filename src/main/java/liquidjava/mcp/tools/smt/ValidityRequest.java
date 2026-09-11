@@ -10,11 +10,9 @@ public record ValidityRequest(
     String conclusion
 ) {
     public ValidityRequest {
-        variables = Map.copyOf(variables);
-        ghosts = Map.copyOf(ghosts);
+        variables = SmtRequest.copyVariables(variables);
+        ghosts = SmtRequest.copyGhosts(ghosts);
         assumptions = List.copyOf(assumptions);
-        SmtRequest.validateVariables(variables);
-        SmtRequest.validateGhosts(ghosts);
     }
 
     public static ValidityRequest fromArguments(Map<String, Object> arguments) {

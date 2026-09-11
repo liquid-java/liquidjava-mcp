@@ -20,4 +20,8 @@ public final class Utils {
     public static String stripAnsi(ByteArrayOutputStream bytes) {
         return Regex.ANSI_ESCAPE.matcher(bytes.toString(StandardCharsets.UTF_8)).replaceAll("");
     }
+
+    public static String getMessage(Throwable error) {
+        return error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage();
+    }
 }

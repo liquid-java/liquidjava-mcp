@@ -27,7 +27,7 @@ public record ValidityResult(Status status, List<Map<String, String>> counterexa
         INVALID,
         UNKNOWN;
 
-        public String wireValue() {
+        public String value() {
             return name().toLowerCase(Locale.ROOT);
         }
     }

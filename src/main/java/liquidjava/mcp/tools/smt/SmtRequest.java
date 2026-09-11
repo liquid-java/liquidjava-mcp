@@ -14,11 +14,9 @@ public record SmtRequest(
     List<String> constraints
 ) {
     public SmtRequest {
-        variables = Map.copyOf(variables);
-        ghosts = Map.copyOf(ghosts);
+        variables = copyVariables(variables);
+        ghosts = copyGhosts(ghosts);
         constraints = List.copyOf(constraints);
-        validateVariables(variables);
-        validateGhosts(ghosts);
     }
 
     public static SmtRequest fromArguments(Map<String, Object> arguments) {
@@ -64,6 +62,18 @@ public record SmtRequest(
     static void validateType(String type) {
         if (!validType(type))
             throw new IllegalArgumentException("unsupported type: " + type);
+    }
+
+    static Map<String, String> copyVariables(Map<String, String> variables) {
+        Map<String, String> copy = Map.copyOf(variables);
+        validateVariables(copy);
+        return copy;
+    }
+
+    static Map<String, GhostDeclaration> copyGhosts(Map<String, GhostDeclaration> ghosts) {
+        Map<String, GhostDeclaration> copy = Map.copyOf(ghosts);
+        validateGhosts(copy);
+        return copy;
     }
 
     private static boolean validType(String type) {

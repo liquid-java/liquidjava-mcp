@@ -38,7 +38,7 @@ public final class CheckValidityTool extends AbstractMcpTool {
 
     private CallToolResult toMcpResult(ValidityResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
-        if (result.status() != null) content.put("status", result.status().wireValue());
+        if (result.status() != null) content.put("status", result.status().value());
         if (result.counterexample() != null) content.put("counterexample", result.counterexample());
         return result(content, result.error());
     }

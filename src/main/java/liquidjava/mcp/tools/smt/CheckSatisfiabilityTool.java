@@ -34,7 +34,7 @@ public final class CheckSatisfiabilityTool extends AbstractMcpTool {
 
     private CallToolResult toMcpResult(SmtResult result) {
         Map<String, Object> content = new LinkedHashMap<>();
-        if (result.status() != null) content.put("status", result.status().wireValue());
+        if (result.status() != null) content.put("status", result.status().value());
         if (result.assignment() != null) content.put("assignment", result.assignment());
         return result(content, result.error());
     }

@@ -30,9 +30,8 @@ public record SmtResult(Status status, List<Map<String, String>> assignment, Mcp
         UNSAT,
         UNKNOWN;
 
-        public String wireValue() {
+        public String value() {
             return name().toLowerCase(Locale.ROOT);
         }
     }
-
 }
