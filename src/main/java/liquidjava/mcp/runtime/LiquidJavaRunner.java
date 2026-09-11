@@ -27,7 +27,7 @@ public final class LiquidJavaRunner {
         1, Thread.ofPlatform().daemon().name("liquidjava-runner").factory());
     static {
         EXECUTOR.setRemoveOnCancelPolicy(true);
-    };
+    }
     private static CachedAnalysis cachedAnalysis;
     private record CachedAnalysis(AnalysisKey key, String output) {}
 

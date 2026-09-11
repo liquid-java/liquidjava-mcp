@@ -30,9 +30,7 @@ public record AnalysisKey(Path path, boolean debug, List<Source> sources) {
     private static List<Path> sourceFiles(Path path) throws IOException {
         if (!Files.isDirectory(path)) return List.of(path);
         try (Stream<Path> paths = Files.walk(path, FileVisitOption.FOLLOW_LINKS)) {
-            return paths.filter(Files::isRegularFile)
-                .filter(file -> file.toString().endsWith(".java"))
-                .sorted().toList();
+            return paths.filter(PathUtils::isJavaSourceFile).sorted().toList();
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }

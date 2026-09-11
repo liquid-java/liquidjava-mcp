@@ -33,9 +33,13 @@ public final class PathUtils {
         } catch (IOException e) {
             throw new IllegalArgumentException(name + " must be an existing Java source file", e);
         }
-        if (!Files.isRegularFile(source) || !source.getFileName().toString().endsWith(".java"))
+        if (!isJavaSourceFile(source))
             throw new IllegalArgumentException(name + " must be an existing Java source file");
         return source;
+    }
+
+    public static boolean isJavaSourceFile(Path path) {
+        return path != null && Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java");
     }
 
     public static Path canonicalPath(String path) throws IOException {

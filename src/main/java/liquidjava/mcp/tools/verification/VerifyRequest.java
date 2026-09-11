@@ -8,7 +8,7 @@ import liquidjava.mcp.utils.PathUtils;
 public record VerifyRequest(String path, boolean debug) {
     public VerifyRequest {
         Path source = PathUtils.requireExisting(path);
-        if (!Files.isDirectory(source) && (!Files.isRegularFile(source) || !source.getFileName().toString().endsWith(".java")))
+        if (!Files.isDirectory(source) && !PathUtils.isJavaSourceFile(source))
             throw new IllegalArgumentException("path must be a Java source file or directory");
     }
 
