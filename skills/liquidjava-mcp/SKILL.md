@@ -12,7 +12,7 @@ LiquidJava is an additional compile-time Java type checker based on refinement t
 - `@Refinement("predicate")` refines a variable, field, parameter, or return type. Predicates support comparisons, boolean/arithmetic operators, and conditional expressions; `_` means the refined value (such as in return/shorthand refinements).
 - `@RefinementAlias("Name(type x) { predicate }")` defines a reusable predicate alias.
 - `@StateSet({"state1", "state2"})` declares named object states for typestate protocols, represented as uninterpreted functions.
-- `@StateRefinement(from="predicate", to="predicate")` specifies method pre/postconditions; predicates may refer to parameters, object states, and ghost variables.
+- `@StateRefinement(from="predicate", to="predicate")` specifies method pre and postconditions; predicates may refer to parameters, object states, and ghost variables.
 - `@Ghost("type name")` declares a ghost variable, an uninterpreted function whose first parameter is `this`. `ghost(this)` is equivalent to `this.ghost()` and `ghost()`.
 - `old(this)` refers to the receiver state before a call; e.g. `size(this) == size(old(this)) + 1` specifies a size increment.
 
@@ -27,15 +27,15 @@ LiquidJava is an additional compile-time Java type checker based on refinement t
 
 | Tool | When to use |
 |---|---|
-| `verify(path)` | Quick verification run, CLI-style output, lower token usage. |
-| `verify(path, debug=true)` | Detailed verification trace: verification conditions, simplifications, and solver results to explain a failure at the cost of higher token usage. |
-| `get_diagnostics(path)` | Reason about individual errors and warnings in a structured format with more details. |
-| `get_locals(path, line, column, file?)` | Inspect variables and their refinements at a specific source position. |
-| `get_globals(path, file?)` | Inspect global definitions available in the program: aliases, ghosts, and states. |
+| `verify(path)` | Quick verification run, CLI-style output, lower token usage |
+| `verify(path, debug=true)` | Detailed verification trace: verification conditions, simplifications, and solver results to explain a failure at the cost of higher token usage |
+| `get_diagnostics(path)` | Reason about individual errors and warnings in a structured format with more details |
+| `get_locals(path, line, column, file?)` | Inspect variables and their refinements at a specific source position |
+| `get_globals(path, file?)` | Inspect global definitions available in the program: aliases, ghosts, and states |
 | `get_contracts(path, className?, signature?)` | Inspect method and constructor contracts, including parameter refinements, return refinements, and state transitions |
-| `get_state_machine(path)` | Understand the allowed transitions for a typestate protocol. |
-| `check_validity(variables, ghosts, assumptions, conclusion)` | Check whether assumptions prove a specified conclusion. |
-| `check_satisfiability(variables, ghosts, constraints)` | Check whether a set of constraints are satisfiable or detect contradictions. |
+| `get_state_machine(path)` | Understand the allowed transitions for a typestate protocol |
+| `check_validity(variables, ghosts, assumptions, conclusion)` | Check whether assumptions prove a specified conclusion |
+| `check_satisfiability(variables, ghosts, constraints)` | Check whether a set of constraints are satisfiable or detect contradictions |
 
 ## Behavior
 
