@@ -10,6 +10,7 @@ public final class ValidityChecker {
         List<String> constraints = new ArrayList<>(request.assumptions());
         constraints.add("!(" + request.conclusion() + ")");
         SmtResult result = smtChecker.check(new SmtRequest(request.variables(), request.ghosts(), constraints));
+        
         if (result.error() != null)
             return ValidityResult.failed(result.error().code(), result.error().message());
         return switch (result.status()) {

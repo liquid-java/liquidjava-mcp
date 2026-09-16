@@ -3,10 +3,6 @@ package liquidjava.mcp.tools.smt;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import liquidjava.rj_language.ast.Var;
-import liquidjava.rj_language.parsing.RefinementsParser;
-import liquidjava.mcp.utils.Regex;
 
 public record SmtRequest(
     Map<String, String> variables,
@@ -43,52 +39,11 @@ public record SmtRequest(
         return variables;
     }
 
-    static void validateVariables(Map<String, String> variables) {
-        variables.forEach((name, type) -> {
-            if (!validName(name))
-                throw new IllegalArgumentException("invalid variable name: " + name);
-            if (!validType(type))
-                throw new IllegalArgumentException("unsupported variable type: " + type);
-        });
-    }
-
-    static void validateGhosts(Map<String, GhostDeclaration> ghosts) {
-        ghosts.keySet().forEach(name -> {
-            if (!validName(name))
-                throw new IllegalArgumentException("invalid ghost function name: " + name);
-        });
-    }
-
-    static void validateType(String type) {
-        if (!validType(type))
-            throw new IllegalArgumentException("unsupported type: " + type);
-    }
-
     static Map<String, String> copyVariables(Map<String, String> variables) {
-        Map<String, String> copy = Map.copyOf(variables);
-        validateVariables(copy);
-        return copy;
+        return Map.copyOf(variables);
     }
 
     static Map<String, GhostDeclaration> copyGhosts(Map<String, GhostDeclaration> ghosts) {
-        Map<String, GhostDeclaration> copy = Map.copyOf(ghosts);
-        validateGhosts(copy);
-        return copy;
-    }
-
-    private static boolean validType(String type) {
-        return type != null && Regex.TYPE.matcher(type).matches();
-    }
-
-    static boolean validName(String name) {
-        if (name == null)
-            return false;
-        if (!Regex.NAME.matcher(name).matches() || Set.of("_", "this", "old").contains(name))
-            return false;
-        try {
-            return RefinementsParser.createAST(name, "") instanceof Var variable && variable.getName().equals(name);
-        } catch (Exception e) {
-            return false;
-        }
+        return Map.copyOf(ghosts);
     }
 }

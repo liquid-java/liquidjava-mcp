@@ -6,8 +6,6 @@ import java.util.Map;
 public record GhostDeclaration(List<String> parameterTypes, String returnType) {
     public GhostDeclaration {
         parameterTypes = List.copyOf(parameterTypes);
-        parameterTypes.forEach(SmtRequest::validateType);
-        SmtRequest.validateType(returnType);
     }
 
     static GhostDeclaration fromArguments(Map<?, ?> arguments) {

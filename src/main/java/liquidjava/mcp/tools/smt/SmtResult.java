@@ -1,14 +1,13 @@
 package liquidjava.mcp.tools.smt;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import liquidjava.mcp.tools.McpError;
 import liquidjava.smt.Counterexample;
 
-public record SmtResult(Status status, List<Map<String, String>> assignment, McpError error) {
-    public static SmtResult sat(Counterexample assignment) {
-        List<Map<String, String>> values = assignment.assignments().stream()
+public final class SmtResult extends SolverResult<SmtResult.Status> {
+    public static SmtResult sat(Counterexample counterexample) {
+        List<Map<String, String>> values = counterexample.assignments().stream()
             .map(pair -> Map.of("variable", pair.first(), "value", pair.second())).toList();
         return new SmtResult(Status.SAT, values, null);
     }
@@ -25,13 +24,17 @@ public record SmtResult(Status status, List<Map<String, String>> assignment, Mcp
         return new SmtResult(null, null, new McpError(code, message));
     }
 
+    private SmtResult(Status status, List<Map<String, String>> assignment, McpError error) {
+        super(status, assignment, error);
+    }
+
+    public List<Map<String, String>> assignment() {
+        return assignments();
+    }
+
     public enum Status {
         SAT,
         UNSAT,
-        UNKNOWN;
-
-        public String value() {
-            return name().toLowerCase(Locale.ROOT);
-        }
+        UNKNOWN
     }
 }

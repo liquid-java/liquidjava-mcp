@@ -1,11 +1,10 @@
 package liquidjava.mcp.tools.smt;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import liquidjava.mcp.tools.McpError;
 
-public record ValidityResult(Status status, List<Map<String, String>> counterexample, McpError error) {
+public final class ValidityResult extends SolverResult<ValidityResult.Status> {
     public static ValidityResult valid() {
         return new ValidityResult(Status.VALID, null, null);
     }
@@ -22,14 +21,17 @@ public record ValidityResult(Status status, List<Map<String, String>> counterexa
         return new ValidityResult(null, null, new McpError(code, message));
     }
 
+    private ValidityResult(Status status, List<Map<String, String>> counterexample, McpError error) {
+        super(status, counterexample, error);
+    }
+
+    public List<Map<String, String>> counterexample() {
+        return assignments();
+    }
+
     public enum Status {
         VALID,
         INVALID,
-        UNKNOWN;
-
-        public String value() {
-            return name().toLowerCase(Locale.ROOT);
-        }
+        UNKNOWN
     }
-
 }

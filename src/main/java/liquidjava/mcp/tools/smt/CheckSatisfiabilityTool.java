@@ -2,15 +2,12 @@ package liquidjava.mcp.tools.smt;
 
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
-import liquidjava.mcp.tools.AbstractMcpTool;
 import liquidjava.mcp.tools.McpError;
 
 /** Checks whether a set of refinement predicates has a satisfying assignment. */
-public final class CheckSatisfiabilityTool extends AbstractMcpTool {
-    private final Function<SmtRequest, SmtResult> checker;
+public final class CheckSatisfiabilityTool extends AbstractSmtTool<SmtRequest, SmtResult> {
 
     public CheckSatisfiabilityTool(Function<SmtRequest, SmtResult> checker, McpJsonMapper jsonMapper) {
         super("check_satisfiability", """
@@ -21,21 +18,10 @@ public final class CheckSatisfiabilityTool extends AbstractMcpTool {
             Uses LiquidJava's solver semantics and returns sat, unsat, or unknown.
             Sat results include a satisfying assignment when the solver provides one.
             Does not support aliases, source constants, or implicit receiver/return/old-state bindings.
-        """, jsonMapper);
-        this.checker = checker;
+        """, checker, message -> SmtResult.failed(McpError.Code.INVALID_INPUT, message), jsonMapper);
     }
 
     public CallToolResult call(Map<String, Object> arguments) {
-        return handleRequest(arguments, SmtRequest::fromArguments,
-            request -> toMcpResult(checker.apply(request)),
-            message -> toMcpResult(SmtResult.failed(McpError.Code.INVALID_INPUT, message))
-        );
-    }
-
-    private CallToolResult toMcpResult(SmtResult result) {
-        Map<String, Object> content = new LinkedHashMap<>();
-        if (result.status() != null) content.put("status", result.status().value());
-        if (result.assignment() != null) content.put("assignment", result.assignment());
-        return result(content, result.error());
+        return handleSmtRequest(arguments, SmtRequest::fromArguments, "assignment");
     }
 }

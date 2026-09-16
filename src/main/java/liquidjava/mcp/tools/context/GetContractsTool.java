@@ -2,17 +2,12 @@ package liquidjava.mcp.tools.context;
 
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import liquidjava.mcp.tools.AbstractMcpTool;
-import liquidjava.mcp.tools.McpError;
 
 /**
  * Exposes registered LiquidJava method and constructor contracts.
  */
-public final class GetContractsTool extends AbstractMcpTool {
-    private final ContextInspector inspector;
+public final class GetContractsTool extends AbstractContextTool<ContractRequest> {
 
     public GetContractsTool(ContextInspector inspector, McpJsonMapper jsonMapper) {
         super("get_contracts", """
@@ -20,21 +15,16 @@ public final class GetContractsTool extends AbstractMcpTool {
             Each contract includes fully qualified signature, parameter names, types and refinements, return type and refinement, state transitions, and declaration location.
             Optional `className` and `signature` filters use exact matches and can be combined.
             The `signature` must be fully qualified, e.g. `com.example.MyClass.myMethod(int, java.lang.String)`.
-        """, jsonMapper);
-        this.inspector = inspector;
+        """, inspector, jsonMapper);
     }
 
     @Override
     public CallToolResult call(Map<String, Object> arguments) {
-        return handleRequest(arguments, ContractRequest::fromArguments,
-            request -> toMcpResult(inspector.getContracts(request)),
-            message -> toMcpResult(ContextResult.failed(McpError.Code.INVALID_INPUT, message))
+        return handleContextRequest(
+            arguments,
+            ContractRequest::fromArguments,
+            inspector::getContracts,
+            "contracts"
         );
-    }
-
-    private CallToolResult toMcpResult(ContextResult result) {
-        Map<String, Object> content = new LinkedHashMap<>();
-        content.put("contracts", result.context().getOrDefault("contracts", List.of()));
-        return result(content, result.error());
     }
 }

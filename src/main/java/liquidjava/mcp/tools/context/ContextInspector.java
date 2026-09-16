@@ -7,8 +7,6 @@ import liquidjava.mcp.tools.McpError;
 
 public final class ContextInspector {
     public ContextResult getLocals(ContextRequest request) {
-        if (request.line() == null)
-            return ContextResult.failed(McpError.Code.INVALID_INPUT, "expected path, file, line, and column");
         return inspect(request.path(), () -> ContextMapper.locals(request));
     }
 

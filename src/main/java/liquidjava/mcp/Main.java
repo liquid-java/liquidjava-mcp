@@ -20,8 +20,7 @@ import liquidjava.mcp.tools.verification.LiquidJavaVerifier;
 import liquidjava.mcp.tools.context.ContextInspector;
 import liquidjava.mcp.tools.fsm.GetStateMachineTool;
 
-public final class Main {
-    private Main() {}
+public class Main {
 
     public static void main(String[] args) {
         PrintStream protocolOutput = System.out;
@@ -31,20 +30,20 @@ public final class Main {
         LiquidJavaVerifier verifier = new LiquidJavaVerifier();
         ContextInspector inspector = new ContextInspector();
         McpSyncServer server = McpServer.sync(transport)
-                .serverInfo("liquidjava-mcp", "0.1.0-SNAPSHOT")
-                .capabilities(ServerCapabilities.builder().tools(false).build())
-                .validateToolInputs(false)
-                .tools(
-                    new VerifyTool(verifier, mapper).specification(),
-                    new GetDiagnosticsTool(verifier, mapper).specification(),
-                    new GetLocalsTool(inspector, mapper).specification(),
-                    new GetGlobalsTool(inspector, mapper).specification(),
-                    new GetContractsTool(inspector, mapper).specification(),
-                    new CheckValidityTool(new ValidityChecker()::check, mapper).specification(),
-                    new CheckSatisfiabilityTool(new SmtChecker()::check, mapper).specification(),
-                    new GetStateMachineTool(mapper).specification()
-                )
-                .build();
+            .serverInfo("liquidjava-mcp", "0.1.0-SNAPSHOT")
+            .capabilities(ServerCapabilities.builder().tools(false).build())
+            .validateToolInputs(false)
+            .tools(
+                new VerifyTool(verifier, mapper).specification(),
+                new GetDiagnosticsTool(verifier, mapper).specification(),
+                new GetLocalsTool(inspector, mapper).specification(),
+                new GetGlobalsTool(inspector, mapper).specification(),
+                new GetContractsTool(inspector, mapper).specification(),
+                new CheckValidityTool(new ValidityChecker()::check, mapper).specification(),
+                new CheckSatisfiabilityTool(new SmtChecker()::check, mapper).specification(),
+                new GetStateMachineTool(mapper).specification()
+            )
+            .build();
         Runtime.getRuntime().addShutdownHook(new Thread(server::close, "mcp-shutdown"));
     }
 }
