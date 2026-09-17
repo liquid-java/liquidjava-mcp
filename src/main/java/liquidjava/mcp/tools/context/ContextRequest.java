@@ -7,7 +7,7 @@ import liquidjava.mcp.utils.PathUtils;
 
 public record ContextRequest(String path, String file, Integer line, Integer column) {
     public ContextRequest {
-        Path verificationPath = PathUtils.requireExisting(path);
+        Path verificationPath = PathUtils.requireExistingSource(path);
         path = verificationPath.toString();
 
         if (file != null) {

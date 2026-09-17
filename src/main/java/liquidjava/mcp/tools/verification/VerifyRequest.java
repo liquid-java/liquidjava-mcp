@@ -1,15 +1,11 @@
 package liquidjava.mcp.tools.verification;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 import liquidjava.mcp.utils.PathUtils;
 
 public record VerifyRequest(String path, boolean debug) {
     public VerifyRequest {
-        Path source = PathUtils.requireExisting(path);
-        if (!Files.isDirectory(source) && !PathUtils.isJavaSourceFile(source))
-            throw new IllegalArgumentException("path must be a Java source file or directory");
+        PathUtils.requireExistingSource(path);
     }
 
     public static VerifyRequest fromArguments(Map<String, Object> arguments) {

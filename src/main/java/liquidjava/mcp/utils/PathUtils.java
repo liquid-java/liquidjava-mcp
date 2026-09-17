@@ -38,6 +38,13 @@ public final class PathUtils {
         return source;
     }
 
+    public static Path requireExistingSource(String value) {
+        Path source = requireExisting(value);
+        if (!Files.isDirectory(source) && !isJavaSourceFile(source))
+            throw new IllegalArgumentException("path must be a Java source file or directory");
+        return source;
+    }
+
     public static boolean isJavaSourceFile(Path path) {
         return path != null && Files.isRegularFile(path) && path.getFileName().toString().endsWith(".java");
     }
